@@ -1,0 +1,134 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--font-inter), Arial, sans-serif;
+  --color-primary: #245be3;
+  --color-ink: #202b3b;
+  --color-muted: #7b8493;
+  --color-canvas: #f8fafc;
+  --color-line: #e9edf2;
+}
+
+@layer base {
+  :root {
+    --primary: #245be3;
+    --primary-dark: #1649cb;
+    --ink: #202b3b;
+    --muted: #7b8493;
+    --line: #e9edf2;
+    --canvas: #f8fafc;
+    --sidebar: 232px;
+  }
+  body {
+    @apply m-0 bg-canvas font-sans text-sm leading-normal text-ink antialiased;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  a {
+    @apply transition-[background,color,border-color,box-shadow] duration-150;
+  }
+  button {
+    @apply cursor-pointer border-0 bg-transparent text-inherit disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  a {
+    @apply text-inherit no-underline;
+  }
+  button:focus-visible,
+  a:focus-visible {
+    @apply outline-[3px] outline-[#9dbbff] outline-offset-[3px];
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    @apply outline-2 outline-[#c4d4ff] outline-offset-1;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply m-0 font-semibold;
+  }
+  p {
+    @apply m-0;
+  }
+  svg {
+    @apply shrink-0;
+  }
+  input[type='checkbox'] {
+    @apply h-3.5 w-3.5 cursor-pointer accent-primary border border-[#d5dbe4];
+  }
+  small {
+    @apply text-xs;
+  }
+  strong {
+    @apply font-semibold;
+  }
+  main {
+    @apply min-h-[calc(100vh-65px)];
+  }
+  table {
+    @apply w-full border-collapse text-left text-xs whitespace-nowrap;
+  }
+  th {
+    @apply border-b border-line bg-[#fbfcfd] px-4 py-[11px] text-[11px] font-medium text-[#718096];
+  }
+  th svg {
+    @apply ml-1.5 inline align-middle;
+  }
+  td {
+    @apply border-b border-[#f0f2f6] px-4 py-3.5;
+  }
+  tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  tbody tr:hover {
+    @apply bg-[#fafcff];
+  }
+  @media (max-width: 1200px) {
+    :root {
+      --sidebar: 210px;
+    }
+  }
+  @media (max-width: 960px) {
+    :root {
+      --sidebar: 190px;
+    }
+  }
+  @media (max-width: 720px) {
+    :root {
+      --sidebar: 0px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      @apply transition-none! scroll-auto!;
+    }
+  }
+}
+
+@keyframes enrich-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes research-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes research-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}

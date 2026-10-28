@@ -1,0 +1,7 @@
+node_modules
+.next
+legacy
+.playwright-mcp
+pnpm-lock.yaml
+next-env.d.ts
+public/fonts
