@@ -37,7 +37,7 @@ export function downloadDirectoryCsv(records: (Company | Person)[], isPeople: bo
   );
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `infoxem-demo-${isPeople ? 'people' : 'buyers'}.csv`;
+  anchor.download = `infoxem-${isPeople ? 'people' : 'buyers'}.csv`;
   document.body.append(anchor);
   anchor.click();
   anchor.remove();

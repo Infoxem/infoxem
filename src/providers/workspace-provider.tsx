@@ -41,8 +41,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [toast, notify] = useState('');
   const [listRecordIds, setListRecordIds] = useState<string[]>([]);
   const [contactPerson, setContactPerson] = useState<Person | null>(null);
-  const [requestTarget, setRequestTarget] = useState('Selected records');
-  const [initialRequestFields, setInitialRequestFields] = useState(['Work email']);
+  const requestTarget = 'Selected records';
+  const initialRequestFields = ['Work email'];
 
   useEffect(() => {
     if (!toast) return;
@@ -89,10 +89,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setListRecordIds(ids);
       setModal('list');
     },
-    openRequest: (target, fields = ['Work email']) => {
-      setRequestTarget(target);
-      setInitialRequestFields(fields);
-      setModal('request');
+    openRequest: () => {
+      notify('Request Data is not available yet.');
     },
     showContact: (person) => {
       setContactPerson(person);
@@ -105,11 +103,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       })),
     saveNotes: (id, note) =>
       persist((current) => ({ ...current, notes: { ...current.notes, [id]: note } })),
-    addRequest: (request) =>
-      persist((current) => ({
-        ...current,
-        requests: [...current.requests, { ...request, status: 'Pending' }],
-      })),
+    addRequest: () => {
+      notify('Request Data is not available yet.');
+    },
   };
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

@@ -84,6 +84,7 @@ export function RecordProfile({
           <div>
             <dt>Keywords</dt>
             <dd className={ui('detail-pills')}>
+              {!company.products.length && <span>Not Available</span>}
               {company.products.map((value) => (
                 <span key={value} className={ui('record-pill')}>
                   {value}
@@ -93,7 +94,7 @@ export function RecordProfile({
           </div>
           <div>
             <dt>Employees</dt>
-            <dd>{company.size} employees</dd>
+            <dd>{company.size === 'Not Available' ? company.size : `${company.size} employees`}</dd>
           </div>
           <div>
             <dt>Location</dt>
@@ -108,9 +109,13 @@ export function RecordProfile({
           <div>
             <dt>Website</dt>
             <dd>
-              <a href={`https://${company.domain}`} target="_blank" rel="noopener noreferrer">
-                {company.domain}
-              </a>
+              {company.domain ? (
+                <a href={`https://${company.domain}`} target="_blank" rel="noopener noreferrer">
+                  {company.domain}
+                </a>
+              ) : (
+                <span>Not Available</span>
+              )}
             </dd>
           </div>
         </dl>
@@ -135,15 +140,19 @@ export function RecordProfile({
             <div>
               <div className={ui('detail-title-row')}>
                 <h1>{person?.name ?? company.name}</h1>
-                <a
-                  href={`https://${company.domain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`Website · ${company.domain}`}
-                  aria-label="Company website"
-                >
-                  <Globe size={16} />
-                </a>
+                {company.domain ? (
+                  <a
+                    href={`https://${company.domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Website · ${company.domain}`}
+                    aria-label="Company website"
+                  >
+                    <Globe size={16} />
+                  </a>
+                ) : (
+                  <span>Not Available</span>
+                )}
               </div>
               <p>
                 {person ? (
@@ -162,6 +171,7 @@ export function RecordProfile({
           </div>
           <div className={ui('detail-header-actions')}>
             <button
+              disabled
               className={ui('detail-square-button')}
               title="Request contact information"
               aria-label="Request contact information"
@@ -205,7 +215,7 @@ export function RecordProfile({
                 <header>
                   <Sparkles size={17} />
                   <h2>Company insights</h2>
-                  <span className={ui('detail-demo-label')}>Demo data</span>
+                  <span className={ui('detail-demo-label')}>Imported record</span>
                 </header>
                 <div className={ui('detail-card-tabs')}>
                   <span className={ui('active')}>Overview</span>
@@ -323,12 +333,16 @@ export function RecordProfile({
                   Employees: company.size,
                   City: company.city,
                   Country: company.country,
-                  Website: company.domain,
-                  Products: company.products.join(', '),
+                  Website: company.domain || 'Not Available',
+                  Phone: 'Not Available',
+                  Email: 'Not Available',
+                  'Source URL': 'Not Available',
+                  ...company.sourceFields,
+                  Products: company.products.join(', ') || 'Not Available',
                 }).map(([label, value]) => (
                   <div key={label}>
                     <dt>{label}</dt>
-                    <dd>{value}</dd>
+                    <dd>{value || 'Not Available'}</dd>
                   </div>
                 ))}
               </dl>
@@ -336,7 +350,8 @@ export function RecordProfile({
           )}
           <p className={ui('detail-profile-disclaimer')}>
             <ShieldCheck size={12} />
-            Illustrative profile and contact data. No live enrichment is performed.
+            Imported source records. Licence status is not live-verified. No live enrichment is
+            performed.
           </p>
         </div>
       </div>

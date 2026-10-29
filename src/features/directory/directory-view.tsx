@@ -144,15 +144,20 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                {Array.from({ length: pages }, (_, index) => (
-                  <button
-                    key={index}
-                    className={ui(pageNum === index + 1 ? 'current' : '')}
-                    onClick={() => setPageNum(index + 1)}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
+                {Array.from({ length: pages }, (_, index) => index)
+                  .filter(
+                    (index) =>
+                      Math.abs(index + 1 - pageNum) <= 2 || index === 0 || index === pages - 1,
+                  )
+                  .map((index) => (
+                    <button
+                      key={index}
+                      className={ui(pageNum === index + 1 ? 'current' : '')}
+                      onClick={() => setPageNum(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
                 <button
                   className={ui('icon-button')}
                   aria-label="Next page"
@@ -167,8 +172,8 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
         </div>
       </div>
       <div className={ui('data-disclaimer')}>
-        <ShieldCheck size={14} /> Demo data for UI exploration. Company and contact information is
-        illustrative.
+        <ShieldCheck size={14} /> Imported facility records. Licence status is not live-verified.
+        Missing details are Not Available.
       </div>
     </div>
   );

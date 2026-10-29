@@ -156,6 +156,7 @@ export function DirectoryTable({
                           }
                         >
                           <button
+                            disabled
                             className={ui('record-contact')}
                             onClick={() =>
                               person.email
@@ -171,17 +172,18 @@ export function DirectoryTable({
                                 <CircleHelp className={ui('contact-status')} size={9} />
                               )}
                             </span>
-                            {person.email ? 'Access email' : 'Request email'}
+                            {person.email ? 'Access email' : 'Not Available'}
                           </button>
                         </RecordTooltip>
                       </td>
                       <td>
                         <RecordTooltip text="Request missing phone number">
                           <button
+                            disabled
                             className={ui('record-contact')}
                             onClick={() => openRequest(person.name, ['Phone number'])}
                           >
-                            <Phone size={15} /> Request phone
+                            <Phone size={15} /> Not Available
                           </button>
                         </RecordTooltip>
                       </td>
@@ -205,15 +207,19 @@ export function DirectoryTable({
                       <td>
                         <div className={ui('record-links')}>
                           <RecordTooltip text={`Website · ${company.domain}`}>
-                            <a
-                              className={ui('record-icon-link')}
-                              aria-label={`Visit ${company.name} website`}
-                              href={`https://${company.domain}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Globe size={16} />
-                            </a>
+                            {company.domain ? (
+                              <a
+                                className={ui('record-icon-link')}
+                                aria-label={`Visit ${company.name} website`}
+                                href={`https://${company.domain}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Globe size={16} />
+                              </a>
+                            ) : (
+                              <span>Not Available</span>
+                            )}
                           </RecordTooltip>
                         </div>
                       </td>

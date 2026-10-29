@@ -114,8 +114,8 @@ export function ResearchReport() {
           <ShieldCheck size={13} />
           One sample record · No database connection
         </span>
-        <Link href={`/buyers/${record.company.id}`}>
-          Open company profile
+        <Link href="/buyers">
+          Find real companies
           <ArrowUpRight size={13} />
         </Link>
       </footer>

@@ -1,4 +1,4 @@
-import { companies, people } from '@/lib/demo-data';
+import { companies, people, getCompanyById } from '@/lib/demo-data';
 import type { Company, Person } from '@/types/records';
 
 export type DirectoryCriteria = {
@@ -76,7 +76,7 @@ export function filterRecords(
   const records = kind === 'people' ? people : companies;
   const terms = getSearchTerms(criteria.query);
   const companyFor = (record: Company | Person) =>
-    'company' in record ? companies.find((c) => c.id === record.company) : record;
+    'company' in record ? getCompanyById(record.company) : record;
   return records
     .filter((record) => {
       const company = companyFor(record);

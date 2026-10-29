@@ -11,6 +11,8 @@ test('CSV handles commas, quotes, newlines, and spreadsheet formula-like cells',
 });
 test('people exports resolve employer names and markets', () => {
   const csv = directoryCsv([people[0]], true);
-  assert.ok(csv.includes('"Amina Otieno","Head of Procurement","Meridian Healthcare","Kenya"'));
+  assert.ok(
+    csv.includes('"SAMUEL NJAGI","Superintendent · PHARMTECH","CUREWAVE PHARMACY","Kenya"'),
+  );
   assert.equal(csv.split('\r\n').length, 2);
 });

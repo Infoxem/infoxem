@@ -35,6 +35,7 @@ export function ProfileOverview({
             Product focus
           </dt>
           <dd className={ui('detail-pills')}>
+            {!company.products.length && <span>Not Available</span>}
             {company.products.map((product) => (
               <span className={ui('record-pill')} key={product}>
                 {product}
@@ -47,7 +48,7 @@ export function ProfileOverview({
             <Users size={14} />
             Company size
           </dt>
-          <dd>{company.size} employees</dd>
+          <dd>{company.size === 'Not Available' ? company.size : `${company.size} employees`}</dd>
         </div>
         {person && (
           <div>

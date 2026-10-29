@@ -1,4 +1,5 @@
 export type Company = {
+  sourceFields?: Record<string, string>;
   id: string;
   name: string;
   initials: string;

@@ -39,11 +39,12 @@ export function ContactsTable({ records }: { records: Person[] }) {
               <td>{p.role}</td>
               <td>
                 <button
+                  disabled
                   className={ui('contact-button')}
                   onClick={() => (p.email ? showContact(p) : openRequest(p.name))}
                 >
                   {p.email ? <Mail size={14} /> : <Plus size={14} />}{' '}
-                  {p.email ? 'View demo email' : 'Request email'}
+                  {p.email ? 'View demo email' : 'Not Available'}
                 </button>
               </td>
               <td>{<SaveButton recordId={p.id} />}</td>
