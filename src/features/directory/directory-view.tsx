@@ -14,6 +14,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
     search,
     appliedQuery,
     hasSearch,
+    canSearch,
     filtersVisible,
     setFiltersVisible,
     refinements,
@@ -37,7 +38,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
         <div>
           <h1>{isPeople ? 'People' : 'Find buyers'}</h1>
           <p>
-            Search by product, company, or country to find{' '}
+            Search or apply filters to find{' '}
             {isPeople ? 'the right people' : 'pharmaceutical buyers'}.
           </p>
         </div>
@@ -59,13 +60,13 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          {query && (
+          {(query || hasSearch) && (
             <button type="button" aria-label="Clear search" onClick={reset}>
               <X size={16} />
             </button>
           )}
         </label>
-        <button className={ui('button primary')} type="submit" disabled={!query.trim()}>
+        <button className={ui('button primary')} type="submit" disabled={!canSearch}>
           <Search size={16} /> Search
         </button>
         <button
@@ -91,7 +92,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
             onChange={setRefinement}
             onClear={clearRefinements}
             onApply={search}
-            canApply={Boolean(query.trim())}
+            canApply={canSearch}
           />
         )}
         <div className={ui('directory-shell')}>
@@ -99,11 +100,11 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
             <span>
               {hasSearch ? (
                 <>
-                  <strong>{filtered.length}</strong> {isPeople ? 'people' : 'buyers'} found for “
-                  {appliedQuery}”
+                  <strong>{filtered.length}</strong> {isPeople ? 'people' : 'buyers'} found
+                  {appliedQuery.trim() ? ` for “${appliedQuery}”` : ' using filters'}
                 </>
               ) : (
-                'Search to display matching results'
+                'Search or apply filters to display matching results'
               )}
             </span>
             {hasSearch && filtered.length > 0 && (
@@ -144,15 +145,20 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                {Array.from({ length: pages }, (_, index) => (
-                  <button
-                    key={index}
-                    className={ui(pageNum === index + 1 ? 'current' : '')}
-                    onClick={() => setPageNum(index + 1)}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
+                {Array.from({ length: pages }, (_, index) => index)
+                  .filter(
+                    (index) =>
+                      Math.abs(index + 1 - pageNum) <= 2 || index === 0 || index === pages - 1,
+                  )
+                  .map((index) => (
+                    <button
+                      key={index}
+                      className={ui(pageNum === index + 1 ? 'current' : '')}
+                      onClick={() => setPageNum(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
                 <button
                   className={ui('icon-button')}
                   aria-label="Next page"
@@ -167,8 +173,8 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
         </div>
       </div>
       <div className={ui('data-disclaimer')}>
-        <ShieldCheck size={14} /> Demo data for UI exploration. Company and contact information is
-        illustrative.
+        <ShieldCheck size={14} /> Imported facility records. Licence status is not live-verified.
+        Missing details are Not Available.
       </div>
     </div>
   );

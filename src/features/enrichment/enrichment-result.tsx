@@ -208,12 +208,12 @@ export function EnrichmentResult() {
                 {record.contacts.map((person) => (
                   <tr key={person.id}>
                     <td>
-                      <Link className={ui('enrich-contact-name')} href={`/people/${person.id}`}>
+                      <span className={ui('enrich-contact-name')}>
                         <span className={ui(`person-avatar ${company.color}`)}>
                           {person.initials}
                         </span>
                         {person.name}
-                      </Link>
+                      </span>
                     </td>
                     <td>{person.role}</td>
                     <td>
@@ -233,10 +233,7 @@ export function EnrichmentResult() {
                       Not available
                     </td>
                     <td>
-                      <Link
-                        href={`/people/${person.id}`}
-                        aria-label={`Open ${person.name} profile`}
-                      >
+                      <Link href="/people" aria-label="Browse real people">
                         <ArrowUpRight size={15} />
                       </Link>
                     </td>

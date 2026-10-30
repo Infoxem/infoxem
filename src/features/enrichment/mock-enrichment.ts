@@ -1,4 +1,4 @@
-import { companies, people } from '@/lib/demo-data';
+import { companies, people } from '@/lib/sample-data';
 
 /** A single fixed record for the enrichment design preview; no research has been performed. */
 export const mockEnrichment = {

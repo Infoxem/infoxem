@@ -85,16 +85,20 @@ export function ProfileSidebar({ company, person }: { company: Company; person: 
             <div>
               <dt>Links</dt>
               <dd>
-                <a
-                  className={ui('detail-icon-link')}
-                  href={`https://${company.domain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={company.domain}
-                  aria-label="Open company website"
-                >
-                  <Globe size={16} />
-                </a>
+                {company.domain ? (
+                  <a
+                    className={ui('detail-icon-link')}
+                    href={`https://${company.domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={company.domain}
+                    aria-label="Open company website"
+                  >
+                    <Globe size={16} />
+                  </a>
+                ) : (
+                  <span>Not Available</span>
+                )}
               </dd>
             </div>
           </dl>
@@ -124,7 +128,7 @@ export function ProfileSidebar({ company, person }: { company: Company; person: 
           </div>
           <div>
             <dt>Data source</dt>
-            <dd>Illustrative demo data</dd>
+            <dd>Imported facility CSV</dd>
           </div>
         </dl>
       </details>

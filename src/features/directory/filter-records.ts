@@ -1,4 +1,4 @@
-import { companies, people } from '@/lib/demo-data';
+import { companies, people, getCompanyById } from '@/lib/demo-data';
 import type { Company, Person } from '@/types/records';
 
 export type DirectoryCriteria = {
@@ -58,14 +58,24 @@ export function getSearchTerms(query: string): string[] {
     .filter((term) => term && !['in', 'and', 'for'].includes(term));
 }
 
-/** Discovery never exposes the full directory before a meaningful search. */
+export function hasDirectoryCriteria(
+  query: string,
+  refinements: DirectoryRefinements = EMPTY_REFINEMENTS,
+): boolean {
+  return (
+    getSearchTerms(query).length > 0 || Object.values(refinements).some((value) => value.trim())
+  );
+}
+
+/** Discovery stays empty until a meaningful query or filter is applied. */
 export function searchRecords(
   kind: 'buyers' | 'people',
   query: string,
   sort = 'match',
+  refinements: DirectoryRefinements = EMPTY_REFINEMENTS,
 ): (Company | Person)[] {
-  if (!getSearchTerms(query).length) return [];
-  return filterRecords(kind, { ...DEFAULT_CRITERIA, query, sort }, []);
+  if (!hasDirectoryCriteria(query, refinements)) return [];
+  return filterRecords(kind, { ...DEFAULT_CRITERIA, ...refinements, query, sort }, []);
 }
 
 export function filterRecords(
@@ -76,7 +86,7 @@ export function filterRecords(
   const records = kind === 'people' ? people : companies;
   const terms = getSearchTerms(criteria.query);
   const companyFor = (record: Company | Person) =>
-    'company' in record ? companies.find((c) => c.id === record.company) : record;
+    'company' in record ? getCompanyById(record.company) : record;
   return records
     .filter((record) => {
       const company = companyFor(record);

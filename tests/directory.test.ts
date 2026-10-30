@@ -2,100 +2,117 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   DEFAULT_CRITERIA,
+  EMPTY_REFINEMENTS,
+  hasDirectoryCriteria,
   filterRecords,
   searchRecords,
 } from '../src/features/directory/filter-records';
-import { companies, people, getCompanyById } from '../src/lib/demo-data';
+import {
+  companies,
+  people,
+  superintendents,
+  getCompanyById,
+  getPersonById,
+} from '../src/lib/demo-data';
 
-test('discovery stays empty without a meaningful product, company, or country search', () => {
-  for (const kind of ['buyers', 'people'] as const) {
+test('discovery stays empty until a meaningful search', () => {
+  for (const kind of ['buyers', 'people'] as const)
     for (const query of ['', '   ', 'in and for']) assert.deepEqual(searchRecords(kind, query), []);
-  }
 });
-
-test('discovery matches products, company names, and countries for buyers and people', () => {
-  assert.equal(searchRecords('buyers', 'Kenya').length, 3);
-  assert.deepEqual(
-    searchRecords('buyers', 'Meridian').map((record) => record.id),
-    ['meridian'],
+test('all imported facilities are searchable and missing products are not invented', () => {
+  assert.equal(companies.length, 8804);
+  assert.equal(searchRecords('buyers', 'Kenya').length, 8804);
+  assert.equal(searchRecords('buyers', 'CUREWAVE').length, 1);
+  assert.equal(searchRecords('people', 'CUREWAVE').length, 0);
+  assert.ok(
+    searchRecords('buyers', 'Generics in Kenya').every((r) =>
+      r.name.toLowerCase().includes('generics'),
+    ),
   );
-  assert.equal(searchRecords('people', 'Meridian').length, 3);
-  assert.equal(searchRecords('people', 'Generics in Kenya').length, 4);
-  assert.deepEqual(searchRecords('buyers', 'no-such-product'), []);
+  assert.equal(searchRecords('buyers', 'no-such-product').length, 0);
 });
-
-test('combined product and market filters return only relevant buyers', () => {
-  const matches = filterRecords(
-    'buyers',
-    { ...DEFAULT_CRITERIA, country: 'Kenya', product: 'Generics' },
-    [],
-  );
-  assert.deepEqual(
-    matches.map((r) => r.id),
-    ['meridian', 'crown'],
-  );
-});
-test('people search combines employer products with role and location', () => {
-  const matches = filterRecords(
-    'people',
-    { ...DEFAULT_CRITERIA, query: 'Generics in Kenya', seniority: 'Head' },
-    [],
-  );
-  assert.deepEqual(
-    matches.map((r) => r.id),
-    ['amina-otieno'],
-  );
-});
-test('saved records and list membership are both respected', () => {
-  const matches = filterRecords(
-    'buyers',
-    { ...DEFAULT_CRITERIA, savedOnly: true, listIds: ['meridian', 'atlas'] },
-    ['atlas', 'novacare'],
-  );
-  assert.deepEqual(
-    matches.map((r) => r.id),
-    ['atlas'],
-  );
-  assert.equal(filterRecords('buyers', { ...DEFAULT_CRITERIA, listIds: [] }, []).length, 0);
-});
-
-test('company refinements combine domain, city, size, and description keywords', () => {
-  assert.deepEqual(
-    filterRecords(
-      'buyers',
-      {
-        ...DEFAULT_CRITERIA,
-        query: 'Kenya',
-        company: 'meridian.example',
-        location: 'nairobi',
-        size: '51–200',
-        keywords: 'nonexistent, hospitals',
-      },
-      [],
-    ).map((record) => record.id),
-    ['meridian'],
+test('market and business-type filters combine', () => {
+  assert.equal(
+    filterRecords('buyers', { ...DEFAULT_CRITERIA, country: 'Kenya', type: 'WHOLESALE' }, [])
+      .length,
+    602,
   );
   assert.equal(
-    filterRecords('buyers', { ...DEFAULT_CRITERIA, company: 'Meridian', location: 'Dubai' }, [])
+    filterRecords('buyers', { ...DEFAULT_CRITERIA, country: 'Kenya', product: 'Generics' }, [])
       .length,
     0,
   );
 });
-
-test('job title refinements match roles at the searched employer', () => {
+test('superintendents are separate from People and company contact counts', () => {
+  assert.equal(people.length, 0);
+  assert.equal(superintendents.length, 8790);
+  assert.equal(searchRecords('people', 'SAMUEL NJAGI').length, 0);
+  const record = superintendents.find((p) => p.name === 'SAMUEL NJAGI')!;
+  assert.ok(record);
+  assert.equal(record.cadre, 'PHARMTECH');
+  assert.equal(getPersonById(record.id), undefined);
+  assert.equal(getCompanyById(record.company)?.contacts, 0);
+  assert.ok(companies.every((company) => company.contacts === 0));
+  assert.ok(superintendents.every((record) => getCompanyById(record.company)));
+  assert.equal(new Set(superintendents.map((record) => record.id)).size, superintendents.length);
+});
+test('saved records and list membership are both respected', () => {
+  const [a, b, c] = companies;
   assert.deepEqual(
+    filterRecords('buyers', { ...DEFAULT_CRITERIA, savedOnly: true, listIds: [a.id, b.id] }, [
+      b.id,
+      c.id,
+    ]).map((r) => r.id),
+    [b.id],
+  );
+  assert.equal(filterRecords('buyers', { ...DEFAULT_CRITERIA, listIds: [] }, []).length, 0);
+});
+test('company and location refinements reject conflicting locations', () => {
+  const company = companies.find((c) => c.city === 'Nairobi')!;
+  assert.ok(
     filterRecords(
-      'people',
-      { ...DEFAULT_CRITERIA, query: 'Meridian', title: 'procurement', seniority: 'Head' },
+      'buyers',
+      { ...DEFAULT_CRITERIA, company: company.name, location: 'nairobi' },
       [],
-    ).map((record) => record.id),
-    ['amina-otieno'],
+    ).some((c) => c.id === company.id),
+  );
+  assert.equal(
+    filterRecords('buyers', { ...DEFAULT_CRITERIA, company: company.name, location: 'Dubai' }, [])
+      .length,
+    0,
   );
 });
-test('every demo contact points to an existing company and all record IDs are unique', () => {
+test('all company/person IDs resolve uniquely without invented contact details', () => {
   assert.equal(
-    new Set([...companies, ...people].map((record) => record.id)).size,
+    new Set([...companies, ...people].map((r) => r.id)).size,
     companies.length + people.length,
   );
-  for (const person of people) assert.ok(getCompanyById(person.company));
+  assert.equal(people.length, 0);
+  for (const p of people) {
+    assert.ok(getCompanyById(p.company));
+    assert.equal(getPersonById(p.id), p);
+    assert.equal(p.email, false);
+  }
+  for (const c of companies) {
+    assert.equal(c.domain, '');
+    assert.deepEqual(c.products, []);
+  }
+});
+
+test('discovery accepts filters without a query but not an empty start', () => {
+  assert.equal(hasDirectoryCriteria('', EMPTY_REFINEMENTS), false);
+  assert.equal(hasDirectoryCriteria('in and for', { ...EMPTY_REFINEMENTS, company: '   ' }), false);
+  const filters = { ...EMPTY_REFINEMENTS, country: 'Kenya', type: 'WHOLESALE' };
+  assert.equal(hasDirectoryCriteria('', filters), true);
+  const buyers = searchRecords('buyers', '', 'name', filters);
+  assert.equal(buyers.length, 602);
+  assert.ok(buyers.every((record) => 'type' in record && record.type === 'WHOLESALE'));
+  assert.deepEqual(
+    buyers.map((record) => record.name),
+    buyers.map((record) => record.name).sort((a, b) => a.localeCompare(b)),
+  );
+  assert.equal(searchRecords('buyers', 'no-such-company', 'match', filters).length, 0);
+  // The shared People path accepts filters, but no real contacts have been supplied.
+  assert.deepEqual(searchRecords('people', '', 'match', filters), []);
+  assert.deepEqual(searchRecords('buyers', '', 'match', EMPTY_REFINEMENTS), []);
 });
