@@ -26,6 +26,38 @@ export type Person = {
   email: boolean;
 };
 
+export type Superintendent = {
+  id: string;
+  name: string;
+  company: string;
+  cadre: string;
+  registrationNumber: string;
+  enrollmentNumber: string;
+};
+
+export type DirectorySearchState = {
+  scope: string;
+  query: string;
+  appliedQuery: string;
+  page: number;
+  sort: string;
+  selected: string[];
+  filtersVisible: boolean;
+  refinements: Record<
+    | 'country'
+    | 'type'
+    | 'product'
+    | 'seniority'
+    | 'company'
+    | 'title'
+    | 'location'
+    | 'size'
+    | 'keywords',
+    string
+  >;
+  appliedRefinements: DirectorySearchState['refinements'];
+};
+
 export type RecordList = { name: string; ids: string[] };
 export type DataRequest = {
   id: string;
@@ -36,6 +68,7 @@ export type DataRequest = {
   createdAt: string;
 };
 export type WorkspaceState = {
+  directories: Partial<Record<'buyers' | 'people', DirectorySearchState>>;
   saved: string[];
   lists: RecordList[];
   notes: Record<string, string>;

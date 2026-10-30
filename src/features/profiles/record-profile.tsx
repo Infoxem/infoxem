@@ -18,7 +18,7 @@ import {
   Users,
   FileText,
 } from 'lucide-react';
-import { people } from '@/lib/demo-data';
+import { people, superintendents } from '@/lib/demo-data';
 import type { Company, Person } from '@/types/records';
 import { useWorkspace } from '@/providers/workspace-provider';
 import { Logo } from '@/components/records/record-display';
@@ -43,10 +43,11 @@ export function RecordProfile({
   const [selected, setSelected] = useState<string[]>([]);
   const notes = draft ?? storedNotes[id] ?? '';
   const contacts = people.filter((contact) => contact.company === company.id);
+  const companySuperintendents = superintendents.filter((record) => record.company === company.id);
   const tabs = person
     ? ['Overview', 'Company', 'Notes', 'All fields']
     : ['Overview', 'People', 'Locations', 'Notes', 'All fields'];
-  const peopleTable = (
+  const peopleTable = contacts.length ? (
     <DirectoryTable
       isPeople
       records={contacts}
@@ -55,6 +56,51 @@ export function RecordProfile({
       hasSearch
       reset={() => setTab('Overview')}
     />
+  ) : (
+    <p className="px-5 py-6 text-sm text-slate-500">People contact details are Not Available.</p>
+  );
+  const superintendentTable = (
+    <section className={ui('detail-card detail-people-card')} aria-label="Superintendent section">
+      <header>
+        <Users size={17} />
+        <h2>Superintendent</h2>
+      </header>
+      <div
+        className="overflow-x-auto"
+        role="region"
+        aria-label="Superintendent records"
+        tabIndex={0}
+      >
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs text-slate-500">
+            <tr>
+              {['Name', 'Cadre', 'Registration number', 'Enrollment number'].map((label) => (
+                <th key={label} scope="col" className="px-5 py-3 font-medium">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {companySuperintendents.map((record) => (
+              <tr key={record.id} className="border-b border-slate-100">
+                <td className="px-5 py-4 font-medium">{record.name}</td>
+                <td className="px-5 py-4">{record.cadre}</td>
+                <td className="px-5 py-4">{record.registrationNumber}</td>
+                <td className="px-5 py-4">{record.enrollmentNumber}</td>
+              </tr>
+            ))}
+            {!companySuperintendents.length && (
+              <tr>
+                <td colSpan={4} className="px-5 py-6 text-slate-500">
+                  Not Available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
   const companyAbout = (
     <section className={ui('detail-card')}>
@@ -229,29 +275,35 @@ export function RecordProfile({
               {person ? (
                 companyAbout
               ) : (
-                <section className={ui('detail-card detail-people-card')}>
-                  <header>
-                    <Users size={17} />
-                    <h2>People at this company</h2>
-                    <button className={ui('detail-text-button')} onClick={() => setTab('People')}>
-                      View all <ArrowUpRight size={13} />
-                    </button>
-                  </header>
-                  {peopleTable}
-                </section>
+                <>
+                  <section className={ui('detail-card detail-people-card')}>
+                    <header>
+                      <Users size={17} />
+                      <h2>People at this company</h2>
+                      <button className={ui('detail-text-button')} onClick={() => setTab('People')}>
+                        View all <ArrowUpRight size={13} />
+                      </button>
+                    </header>
+                    {peopleTable}
+                  </section>
+                  {superintendentTable}
+                </>
               )}
             </>
           )}
           {tab === 'Company' && companyAbout}
           {tab === 'People' && (
-            <section className={ui('detail-card detail-people-card')}>
-              <header>
-                <Users size={17} />
-                <h2>People at {company.name}</h2>
-                <span className={ui('detail-demo-label')}>{contacts.length} contacts</span>
-              </header>
-              {peopleTable}
-            </section>
+            <>
+              <section className={ui('detail-card detail-people-card')}>
+                <header>
+                  <Users size={17} />
+                  <h2>People at {company.name}</h2>
+                  <span className={ui('detail-demo-label')}>{contacts.length} contacts</span>
+                </header>
+                {peopleTable}
+              </section>
+              {superintendentTable}
+            </>
           )}
           {tab === 'Locations' && (
             <section className={ui('detail-card')}>

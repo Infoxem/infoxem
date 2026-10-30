@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, type SetStateAction } from 'react';
+import { useEffect, type SetStateAction } from 'react';
+import { updateWorkspace, useWorkspaceStore } from '@/hooks/use-workspace-store';
+import type { DirectorySearchState as SearchState } from '@/types/records';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   DEFAULT_CRITERIA,
@@ -9,17 +11,6 @@ import {
   getSearchTerms,
   type DirectoryRefinements,
 } from './filter-records';
-
-type SearchState = {
-  scope: string;
-  query: string;
-  appliedQuery: string;
-  page: number;
-  sort: string;
-  selected: string[];
-  refinements: DirectoryRefinements;
-  appliedRefinements: DirectoryRefinements;
-};
 
 export function useDirectory(kind: 'buyers' | 'people') {
   const router = useRouter();
@@ -33,16 +24,35 @@ export function useDirectory(kind: 'buyers' | 'people') {
     page: 1,
     sort: 'match',
     selected: [],
+    filtersVisible: false,
     refinements: EMPTY_REFINEMENTS,
     appliedRefinements: EMPTY_REFINEMENTS,
   };
-  const [filtersVisible, setFiltersVisible] = useState(false);
-  const [state, setState] = useState<SearchState>(defaults);
-  const current = state.scope === scope ? state : defaults;
+  const workspace = useWorkspaceStore();
+  const saved = workspace.directories[kind];
+  const current = initialQuery && saved?.scope !== scope ? defaults : (saved ?? defaults);
+  // Explicit search links replace the previous search. Bare directory navigation restores it.
+  useEffect(() => {
+    updateWorkspace((previous) => {
+      const stored = previous.directories[kind];
+      const next =
+        initialQuery && stored?.scope !== scope
+          ? { ...defaults, scope }
+          : { ...(stored ?? defaults), scope };
+      return { ...previous, directories: { ...previous.directories, [kind]: next } };
+    });
+    // Defaults are derived solely from these route inputs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, scope, initialQuery]);
   const update = (change: (value: SearchState) => SearchState) =>
-    setState((previous) => change(previous.scope === scope ? previous : defaults));
-  const hasSearch =
-    getSearchTerms(current.query).length > 0 && getSearchTerms(current.appliedQuery).length > 0;
+    updateWorkspace((previous) => ({
+      ...previous,
+      directories: {
+        ...previous.directories,
+        [kind]: change(previous.directories[kind] ?? defaults),
+      },
+    }));
+  const hasSearch = getSearchTerms(current.appliedQuery).length > 0;
   const filtered = hasSearch
     ? filterRecords(
         kind,
@@ -64,7 +74,7 @@ export function useDirectory(kind: 'buyers' | 'people') {
       selected: typeof value === 'function' ? value(previous.selected) : value,
     }));
   const reset = () => {
-    setState({ ...defaults, query: '', appliedQuery: '' });
+    update(() => ({ ...defaults, query: '', appliedQuery: '' }));
     router.replace(`/${kind}`);
   };
   return {
@@ -73,9 +83,6 @@ export function useDirectory(kind: 'buyers' | 'people') {
       update((previous) => ({
         ...previous,
         query,
-        appliedQuery: query.trim() ? previous.appliedQuery : '',
-        page: 1,
-        selected: [],
       })),
     search: () =>
       update((previous) => ({
@@ -87,16 +94,15 @@ export function useDirectory(kind: 'buyers' | 'people') {
       })),
     appliedQuery: current.appliedQuery,
     hasSearch,
-    filtersVisible,
-    setFiltersVisible,
+    filtersVisible: current.filtersVisible,
+    setFiltersVisible: (filtersVisible: boolean) =>
+      update((previous) => ({ ...previous, filtersVisible })),
     refinements: current.refinements,
     appliedRefinements: current.appliedRefinements,
     setRefinement: (field: keyof DirectoryRefinements, value: string) =>
       update((previous) => ({
         ...previous,
         refinements: { ...previous.refinements, [field]: value },
-        page: 1,
-        selected: [],
       })),
     clearRefinements: () =>
       update((previous) => ({

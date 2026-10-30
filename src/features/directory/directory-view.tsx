@@ -59,7 +59,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          {query && (
+          {(query || hasSearch) && (
             <button type="button" aria-label="Clear search" onClick={reset}>
               <X size={16} />
             </button>

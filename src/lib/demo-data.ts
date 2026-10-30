@@ -1,4 +1,4 @@
-import type { Company, Person } from '@/types/records';
+import type { Company, Person, Superintendent } from '@/types/records';
 import records from './facilities.json';
 const missing = 'Not Available';
 export const companies: Company[] = records.map((r) => ({
@@ -16,25 +16,22 @@ export const companies: Company[] = records.map((r) => ({
   color: 'blue',
   description:
     'Imported facility record. Licence information reflects the supplied file, not a live verification.',
-  contacts: r['HTML comment: Superintendent'] ? 1 : 0,
+  contacts: 0,
   sourceFields: r,
 }));
-export const people: Person[] = records.flatMap((r, i) => {
+// The supplied files describe superintendents, not buyer/company contacts.
+export const people: Person[] = [];
+export const superintendents: Superintendent[] = records.flatMap((r, i) => {
   const name = r['HTML comment: Superintendent'];
   return name
     ? [
         {
           id: `superintendent-${companies[i].id}`,
           name,
-          role: `Superintendent · ${r['HTML comment: Cadre'] || missing}`,
           company: companies[i].id,
-          initials: name
-            .split(/\s+/)
-            .map((p) => p[0])
-            .slice(0, 2)
-            .join(''),
-          seniority: missing,
-          email: false,
+          cadre: r['HTML comment: Cadre'] || missing,
+          registrationNumber: r['HTML comment: Registration Number'] || missing,
+          enrollmentNumber: r['HTML comment: Enrollment Number'] || missing,
         },
       ]
     : [];

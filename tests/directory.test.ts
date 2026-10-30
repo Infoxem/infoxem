@@ -5,7 +5,13 @@ import {
   filterRecords,
   searchRecords,
 } from '../src/features/directory/filter-records';
-import { companies, people, getCompanyById, getPersonById } from '../src/lib/demo-data';
+import {
+  companies,
+  people,
+  superintendents,
+  getCompanyById,
+  getPersonById,
+} from '../src/lib/demo-data';
 
 test('discovery stays empty until a meaningful search', () => {
   for (const kind of ['buyers', 'people'] as const)
@@ -15,7 +21,7 @@ test('all imported facilities are searchable and missing products are not invent
   assert.equal(companies.length, 8804);
   assert.equal(searchRecords('buyers', 'Kenya').length, 8804);
   assert.equal(searchRecords('buyers', 'CUREWAVE').length, 1);
-  assert.equal(searchRecords('people', 'CUREWAVE').length, 1);
+  assert.equal(searchRecords('people', 'CUREWAVE').length, 0);
   assert.ok(
     searchRecords('buyers', 'Generics in Kenya').every((r) =>
       r.name.toLowerCase().includes('generics'),
@@ -35,14 +41,18 @@ test('market and business-type filters combine', () => {
     0,
   );
 });
-test('people preserve source roles rather than invented procurement seniority', () => {
-  const result = filterRecords(
-    'people',
-    { ...DEFAULT_CRITERIA, query: 'CUREWAVE', title: 'Superintendent' },
-    [],
-  );
-  assert.equal(result.length, 1);
-  assert.equal(filterRecords('people', { ...DEFAULT_CRITERIA, seniority: 'Head' }, []).length, 0);
+test('superintendents are separate from People and company contact counts', () => {
+  assert.equal(people.length, 0);
+  assert.equal(superintendents.length, 8790);
+  assert.equal(searchRecords('people', 'SAMUEL NJAGI').length, 0);
+  const record = superintendents.find((p) => p.name === 'SAMUEL NJAGI')!;
+  assert.ok(record);
+  assert.equal(record.cadre, 'PHARMTECH');
+  assert.equal(getPersonById(record.id), undefined);
+  assert.equal(getCompanyById(record.company)?.contacts, 0);
+  assert.ok(companies.every((company) => company.contacts === 0));
+  assert.ok(superintendents.every((record) => getCompanyById(record.company)));
+  assert.equal(new Set(superintendents.map((record) => record.id)).size, superintendents.length);
 });
 test('saved records and list membership are both respected', () => {
   const [a, b, c] = companies;
@@ -75,7 +85,7 @@ test('all company/person IDs resolve uniquely without invented contact details',
     new Set([...companies, ...people].map((r) => r.id)).size,
     companies.length + people.length,
   );
-  assert.equal(people.length, 8790);
+  assert.equal(people.length, 0);
   for (const p of people) {
     assert.ok(getCompanyById(p.company));
     assert.equal(getPersonById(p.id), p);
