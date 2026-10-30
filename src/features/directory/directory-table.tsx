@@ -43,7 +43,15 @@ export function DirectoryTable({
   const closeDetail = useCallback(() => setDetail(null), []);
   const columns = isPeople
     ? ['Name', 'Job title', 'Company', 'Emails', 'Phone numbers', 'Actions']
-    : ['Name', 'Actions', 'Links', 'Number of employees', 'Industries', 'Keywords', 'Location'];
+    : [
+        'Name',
+        'Actions',
+        'Links',
+        'Number of employees',
+        'Industries',
+        'Business Type',
+        'Location',
+      ];
   const toggleRow = (id: string) =>
     setSelected((previous) =>
       previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id],
@@ -109,7 +117,7 @@ export function DirectoryTable({
             {records.map((record) => {
               const person = 'role' in record ? record : null;
               const company = 'company' in record ? byId(record.company) : record;
-              const keywords = [...company.products, company.type];
+              const businessTypes = [...company.products, company.type];
               return (
                 <tr
                   key={record.id}
@@ -246,14 +254,16 @@ export function DirectoryTable({
                       <td>
                         <button
                           className={ui('record-tag-button')}
-                          aria-label={`View keywords for ${company.name}`}
+                          aria-label={`View business type for ${company.name}`}
                           aria-haspopup="dialog"
-                          onClick={() => setDetail({ company, kind: 'Keywords', values: keywords })}
+                          onClick={() =>
+                            setDetail({ company, kind: 'Business Type', values: businessTypes })
+                          }
                         >
-                          <span className={ui('record-pill')}>{keywords[0]}</span>
-                          {keywords.length > 1 && (
+                          <span className={ui('record-pill')}>{businessTypes[0]}</span>
+                          {businessTypes.length > 1 && (
                             <span className={ui('record-pill record-more')}>
-                              +{keywords.length - 1}
+                              +{businessTypes.length - 1}
                             </span>
                           )}
                         </button>
@@ -284,8 +294,8 @@ export function DirectoryTable({
             </h2>
             <p>
               {hasSearch
-                ? 'Try another product, company, or country.'
-                : 'Enter a product, company, or country above and select Search.'}
+                ? 'Try another search or filter.'
+                : 'Enter a search or choose filters, then apply them to see results.'}
             </p>
             {hasSearch && (
               <button className={ui('button')} onClick={reset}>

@@ -167,8 +167,8 @@ export function DirectoryFilters({
           </button>
           <p className={ui('refinement-help')}>
             {canApply
-              ? 'Apply filters to refine your search.'
-              : 'Enter a product, company, or country to start.'}
+              ? 'Apply filters to find matching results.'
+              : 'Choose a filter or enter a search to start.'}
           </p>
         </footer>
       </form>

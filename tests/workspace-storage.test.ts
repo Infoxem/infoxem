@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { searchRecords } from '../src/features/directory/filter-records';
 import { EMPTY_WORKSPACE, loadWorkspace, parseWorkspace } from '../src/lib/workspace-storage';
 
 test('corrupt or incorrectly shaped browser data produces a usable workspace', () => {
@@ -79,4 +80,36 @@ test('invalid saved directory state falls back without discarding valid workspac
   assert.equal(state.directories.people?.sort, 'match');
   assert.equal(state.directories.people?.refinements.country, '');
   assert.deepEqual(state.saved, ['keep']);
+});
+
+test('filter-only submitted searches survive storage separately from unsaved drafts', () => {
+  const restored = parseWorkspace(
+    JSON.stringify({
+      directories: {
+        buyers: {
+          query: '',
+          appliedQuery: '',
+          page: 2,
+          sort: 'name',
+          refinements: { country: 'Other draft country' },
+          appliedRefinements: { country: 'Kenya', type: 'WHOLESALE' },
+        },
+        people: {
+          query: '',
+          appliedQuery: '',
+          refinements: { title: 'Manager' },
+          appliedRefinements: { title: 'Director' },
+        },
+      },
+    }),
+  );
+  const buyers = restored.directories.buyers!;
+  assert.equal(buyers.query, '');
+  assert.equal(buyers.page, 2);
+  assert.equal(buyers.refinements.country, 'Other draft country');
+  assert.equal(
+    searchRecords('buyers', buyers.appliedQuery, buyers.sort, buyers.appliedRefinements).length,
+    602,
+  );
+  assert.equal(restored.directories.people?.appliedRefinements.title, 'Director');
 });

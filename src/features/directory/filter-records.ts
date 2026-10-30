@@ -58,14 +58,24 @@ export function getSearchTerms(query: string): string[] {
     .filter((term) => term && !['in', 'and', 'for'].includes(term));
 }
 
-/** Discovery never exposes the full directory before a meaningful search. */
+export function hasDirectoryCriteria(
+  query: string,
+  refinements: DirectoryRefinements = EMPTY_REFINEMENTS,
+): boolean {
+  return (
+    getSearchTerms(query).length > 0 || Object.values(refinements).some((value) => value.trim())
+  );
+}
+
+/** Discovery stays empty until a meaningful query or filter is applied. */
 export function searchRecords(
   kind: 'buyers' | 'people',
   query: string,
   sort = 'match',
+  refinements: DirectoryRefinements = EMPTY_REFINEMENTS,
 ): (Company | Person)[] {
-  if (!getSearchTerms(query).length) return [];
-  return filterRecords(kind, { ...DEFAULT_CRITERIA, query, sort }, []);
+  if (!hasDirectoryCriteria(query, refinements)) return [];
+  return filterRecords(kind, { ...DEFAULT_CRITERIA, ...refinements, query, sort }, []);
 }
 
 export function filterRecords(

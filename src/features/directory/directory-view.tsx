@@ -14,6 +14,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
     search,
     appliedQuery,
     hasSearch,
+    canSearch,
     filtersVisible,
     setFiltersVisible,
     refinements,
@@ -37,7 +38,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
         <div>
           <h1>{isPeople ? 'People' : 'Find buyers'}</h1>
           <p>
-            Search by product, company, or country to find{' '}
+            Search or apply filters to find{' '}
             {isPeople ? 'the right people' : 'pharmaceutical buyers'}.
           </p>
         </div>
@@ -65,7 +66,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
             </button>
           )}
         </label>
-        <button className={ui('button primary')} type="submit" disabled={!query.trim()}>
+        <button className={ui('button primary')} type="submit" disabled={!canSearch}>
           <Search size={16} /> Search
         </button>
         <button
@@ -91,7 +92,7 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
             onChange={setRefinement}
             onClear={clearRefinements}
             onApply={search}
-            canApply={Boolean(query.trim())}
+            canApply={canSearch}
           />
         )}
         <div className={ui('directory-shell')}>
@@ -99,11 +100,11 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
             <span>
               {hasSearch ? (
                 <>
-                  <strong>{filtered.length}</strong> {isPeople ? 'people' : 'buyers'} found for “
-                  {appliedQuery}”
+                  <strong>{filtered.length}</strong> {isPeople ? 'people' : 'buyers'} found
+                  {appliedQuery.trim() ? ` for “${appliedQuery}”` : ' using filters'}
                 </>
               ) : (
-                'Search to display matching results'
+                'Search or apply filters to display matching results'
               )}
             </span>
             {hasSearch && filtered.length > 0 && (

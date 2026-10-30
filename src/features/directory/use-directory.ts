@@ -5,10 +5,9 @@ import { updateWorkspace, useWorkspaceStore } from '@/hooks/use-workspace-store'
 import type { DirectorySearchState as SearchState } from '@/types/records';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  DEFAULT_CRITERIA,
   EMPTY_REFINEMENTS,
-  filterRecords,
-  getSearchTerms,
+  searchRecords,
+  hasDirectoryCriteria,
   type DirectoryRefinements,
 } from './filter-records';
 
@@ -52,19 +51,14 @@ export function useDirectory(kind: 'buyers' | 'people') {
         [kind]: change(previous.directories[kind] ?? defaults),
       },
     }));
-  const hasSearch = getSearchTerms(current.appliedQuery).length > 0;
-  const filtered = hasSearch
-    ? filterRecords(
-        kind,
-        {
-          ...DEFAULT_CRITERIA,
-          ...current.appliedRefinements,
-          query: current.appliedQuery,
-          sort: current.sort,
-        },
-        [],
-      )
-    : [];
+  const hasSearch = hasDirectoryCriteria(current.appliedQuery, current.appliedRefinements);
+  const canSearch = hasDirectoryCriteria(current.query, current.refinements);
+  const filtered = searchRecords(
+    kind,
+    current.appliedQuery,
+    current.sort,
+    current.appliedRefinements,
+  );
   const pages = Math.max(1, Math.ceil(filtered.length / 8));
   const pageNum = Math.min(current.page, pages);
   const visible = filtered.slice((pageNum - 1) * 8, pageNum * 8);
@@ -94,6 +88,7 @@ export function useDirectory(kind: 'buyers' | 'people') {
       })),
     appliedQuery: current.appliedQuery,
     hasSearch,
+    canSearch,
     filtersVisible: current.filtersVisible,
     setFiltersVisible: (filtersVisible: boolean) =>
       update((previous) => ({ ...previous, filtersVisible })),

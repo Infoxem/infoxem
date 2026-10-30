@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   DEFAULT_CRITERIA,
+  EMPTY_REFINEMENTS,
+  hasDirectoryCriteria,
   filterRecords,
   searchRecords,
 } from '../src/features/directory/filter-records';
@@ -95,4 +97,22 @@ test('all company/person IDs resolve uniquely without invented contact details',
     assert.equal(c.domain, '');
     assert.deepEqual(c.products, []);
   }
+});
+
+test('discovery accepts filters without a query but not an empty start', () => {
+  assert.equal(hasDirectoryCriteria('', EMPTY_REFINEMENTS), false);
+  assert.equal(hasDirectoryCriteria('in and for', { ...EMPTY_REFINEMENTS, company: '   ' }), false);
+  const filters = { ...EMPTY_REFINEMENTS, country: 'Kenya', type: 'WHOLESALE' };
+  assert.equal(hasDirectoryCriteria('', filters), true);
+  const buyers = searchRecords('buyers', '', 'name', filters);
+  assert.equal(buyers.length, 602);
+  assert.ok(buyers.every((record) => 'type' in record && record.type === 'WHOLESALE'));
+  assert.deepEqual(
+    buyers.map((record) => record.name),
+    buyers.map((record) => record.name).sort((a, b) => a.localeCompare(b)),
+  );
+  assert.equal(searchRecords('buyers', 'no-such-company', 'match', filters).length, 0);
+  // The shared People path accepts filters, but no real contacts have been supplied.
+  assert.deepEqual(searchRecords('people', '', 'match', filters), []);
+  assert.deepEqual(searchRecords('buyers', '', 'match', EMPTY_REFINEMENTS), []);
 });

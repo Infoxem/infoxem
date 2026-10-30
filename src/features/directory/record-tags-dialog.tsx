@@ -8,7 +8,11 @@ import { Logo } from '@/components/records/record-display';
 import { useDialogFocus } from '@/hooks/use-dialog-focus';
 import type { Company } from '@/types/records';
 
-export type RecordTags = { company: Company; kind: 'Industries' | 'Keywords'; values: string[] };
+export type RecordTags = {
+  company: Company;
+  kind: 'Industries' | 'Business Type';
+  values: string[];
+};
 
 export function RecordTagsDialog({ detail, onClose }: { detail: RecordTags; onClose: () => void }) {
   const close = useCallback(() => onClose(), [onClose]);
