@@ -4,10 +4,11 @@ import { ui } from '@/lib/ui';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Layers, Plus } from 'lucide-react';
-import { companies } from '@/lib/demo-data';
+import { useCompanies } from '@/providers/company-provider';
 import { useWorkspace } from '@/providers/workspace-provider';
 
 export function ListDialog() {
+  const { companies } = useCompanies();
   const { saved, lists, setLists, listRecordIds, setModal, notify } = useWorkspace();
   const [listName, setListName] = useState('');
   const router = useRouter();

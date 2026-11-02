@@ -4,8 +4,8 @@ import {
   DEFAULT_CRITERIA,
   EMPTY_REFINEMENTS,
   hasDirectoryCriteria,
-  filterRecords,
-  searchRecords,
+  filterRecords as filterWithData,
+  searchRecords as searchWithData,
 } from '../src/features/directory/filter-records';
 import {
   companies,
@@ -116,3 +116,8 @@ test('discovery accepts filters without a query but not an empty start', () => {
   assert.deepEqual(searchRecords('people', '', 'match', filters), []);
   assert.deepEqual(searchRecords('buyers', '', 'match', EMPTY_REFINEMENTS), []);
 });
+
+const searchRecords = (...args: Parameters<typeof searchWithData>) =>
+  searchWithData(args[0], args[1], args[2], args[3], { companies, people });
+const filterRecords = (...args: Parameters<typeof filterWithData>) =>
+  filterWithData(args[0], args[1], args[2], { companies, people });

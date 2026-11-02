@@ -2,11 +2,12 @@
 
 import { ui } from '@/lib/ui';
 import { Building2, Users, Layers, Sparkles } from 'lucide-react';
-import { companies, people } from '@/lib/demo-data';
+import { useCompanies } from '@/providers/company-provider';
 import { useWorkspace } from '@/providers/workspace-provider';
 import { MiniChart } from '@/components/records/record-display';
 
 export function DashboardStats() {
+  const { companies, people } = useCompanies();
   const { saved, lists, requestCount } = useWorkspace();
   return (
     <div className={ui('stats-grid')}>

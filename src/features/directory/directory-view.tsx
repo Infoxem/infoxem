@@ -5,8 +5,11 @@ import { Search, X, ChevronLeft, ChevronRight, ShieldCheck, SlidersHorizontal } 
 import { DirectoryTable } from './directory-table';
 import { useDirectory } from './use-directory';
 import { DirectoryFilters } from './directory-filters';
+import { downloadDirectoryCsv } from '@/lib/export-csv';
+import { useCompanies } from '@/providers/company-provider';
 
 export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
+  const { loading, error, companies } = useCompanies();
   const isPeople = kind === 'people';
   const {
     query,
@@ -84,94 +87,106 @@ export function DirectoryView({ kind }: { kind: 'buyers' | 'people' }) {
           )}
         </button>
       </form>
-      <div className={ui(`directory-discovery-layout ${filtersVisible ? 'with-filters' : ''}`)}>
-        {filtersVisible && (
-          <DirectoryFilters
-            isPeople={isPeople}
-            values={refinements}
-            onChange={setRefinement}
-            onClear={clearRefinements}
-            onApply={search}
-            canApply={canSearch}
-          />
-        )}
-        <div className={ui('directory-shell')}>
-          <div className={ui('results-heading')} aria-live="polite">
-            <span>
-              {hasSearch ? (
-                <>
-                  <strong>{filtered.length}</strong> {isPeople ? 'people' : 'buyers'} found
-                  {appliedQuery.trim() ? ` for “${appliedQuery}”` : ' using filters'}
-                </>
-              ) : (
-                'Search or apply filters to display matching results'
+      {isPeople && filtered.length > 0 && (
+        <button
+          className={ui('button')}
+          type="button"
+          onClick={() => downloadDirectoryCsv(filtered, isPeople, companies)}
+        >
+          Export results
+        </button>
+      )}
+      {loading && <p role="status">Loading company records…</p>}
+      {!loading && (!error || companies.length > 0) && (
+        <div className={ui(`directory-discovery-layout ${filtersVisible ? 'with-filters' : ''}`)}>
+          {filtersVisible && (
+            <DirectoryFilters
+              isPeople={isPeople}
+              values={refinements}
+              onChange={setRefinement}
+              onClear={clearRefinements}
+              onApply={search}
+              canApply={canSearch}
+            />
+          )}
+          <div className={ui('directory-shell')}>
+            <div className={ui('results-heading')} aria-live="polite">
+              <span>
+                {hasSearch ? (
+                  <>
+                    <strong>{filtered.length}</strong> {isPeople ? 'people' : 'buyers'} found
+                    {appliedQuery.trim() ? ` for “${appliedQuery}”` : ' using filters'}
+                  </>
+                ) : (
+                  'Search or apply filters to display matching results'
+                )}
+              </span>
+              {hasSearch && filtered.length > 0 && (
+                <label className={ui('sort-label')}>
+                  Sort by:{' '}
+                  <select
+                    aria-label="Sort results"
+                    value={sort}
+                    onChange={(event) => setSort(event.target.value)}
+                  >
+                    <option value="match">Relevance</option>
+                    <option value="name">Name A–Z</option>
+                    <option value="country">Country</option>
+                  </select>
+                </label>
               )}
-            </span>
+            </div>
+            <DirectoryTable
+              isPeople={isPeople}
+              records={visible}
+              selected={selected}
+              setSelected={setSelected}
+              hasSearch={hasSearch}
+              reset={reset}
+            />
             {hasSearch && filtered.length > 0 && (
-              <label className={ui('sort-label')}>
-                Sort by:{' '}
-                <select
-                  aria-label="Sort results"
-                  value={sort}
-                  onChange={(event) => setSort(event.target.value)}
-                >
-                  <option value="match">Relevance</option>
-                  <option value="name">Name A–Z</option>
-                  <option value="country">Country</option>
-                </select>
-              </label>
+              <div className={ui('pagination')}>
+                <span>
+                  {(pageNum - 1) * 8 + 1}–{Math.min(pageNum * 8, filtered.length)} of{' '}
+                  {filtered.length} {isPeople ? 'people' : 'buyers'}
+                </span>
+                <div>
+                  <button
+                    className={ui('icon-button')}
+                    aria-label="Previous page"
+                    disabled={pageNum === 1}
+                    onClick={() => setPageNum(pageNum - 1)}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  {Array.from({ length: pages }, (_, index) => index)
+                    .filter(
+                      (index) =>
+                        Math.abs(index + 1 - pageNum) <= 2 || index === 0 || index === pages - 1,
+                    )
+                    .map((index) => (
+                      <button
+                        key={index}
+                        className={ui(pageNum === index + 1 ? 'current' : '')}
+                        onClick={() => setPageNum(index + 1)}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+                  <button
+                    className={ui('icon-button')}
+                    aria-label="Next page"
+                    disabled={pageNum >= pages}
+                    onClick={() => setPageNum(pageNum + 1)}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-          <DirectoryTable
-            isPeople={isPeople}
-            records={visible}
-            selected={selected}
-            setSelected={setSelected}
-            hasSearch={hasSearch}
-            reset={reset}
-          />
-          {hasSearch && filtered.length > 0 && (
-            <div className={ui('pagination')}>
-              <span>
-                {(pageNum - 1) * 8 + 1}–{Math.min(pageNum * 8, filtered.length)} of{' '}
-                {filtered.length} {isPeople ? 'people' : 'buyers'}
-              </span>
-              <div>
-                <button
-                  className={ui('icon-button')}
-                  aria-label="Previous page"
-                  disabled={pageNum === 1}
-                  onClick={() => setPageNum(pageNum - 1)}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: pages }, (_, index) => index)
-                  .filter(
-                    (index) =>
-                      Math.abs(index + 1 - pageNum) <= 2 || index === 0 || index === pages - 1,
-                  )
-                  .map((index) => (
-                    <button
-                      key={index}
-                      className={ui(pageNum === index + 1 ? 'current' : '')}
-                      onClick={() => setPageNum(index + 1)}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
-                <button
-                  className={ui('icon-button')}
-                  aria-label="Next page"
-                  disabled={pageNum >= pages}
-                  onClick={() => setPageNum(pageNum + 1)}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      )}
       <div className={ui('data-disclaimer')}>
         <ShieldCheck size={14} /> Imported facility records. Licence status is not live-verified.
         Missing details are Not Available.

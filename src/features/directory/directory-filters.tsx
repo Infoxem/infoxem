@@ -11,7 +11,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { companies } from '@/lib/demo-data';
+import { useCompanies } from '@/providers/company-provider';
 import type { DirectoryRefinements } from './filter-records';
 
 export function DirectoryFilters({
@@ -29,6 +29,7 @@ export function DirectoryFilters({
   onApply: () => void;
   canApply: boolean;
 }) {
+  const { companies } = useCompanies();
   const input = (key: keyof DirectoryRefinements, label: string, placeholder: string) => (
     <label className={ui('refinement-field')}>
       <span>{label}</span>

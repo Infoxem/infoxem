@@ -1,4 +1,6 @@
 'use client';
+import { companyLocation } from '@/lib/company-location';
+import { websiteUrl } from '@/lib/company-data';
 
 import { ui } from '@/lib/ui';
 import Link from 'next/link';
@@ -6,6 +8,7 @@ import { ChevronUp, Globe, MapPin, Building2, GripVertical, Bookmark } from 'luc
 import type { Company, Person } from '@/types/records';
 import { useWorkspace } from '@/providers/workspace-provider';
 import { ContactInformation } from './contact-information';
+import { DataSources } from './data-sources';
 
 export function ProfileSidebar({ company, person }: { company: Company; person: Person | null }) {
   const { saved, lists } = useWorkspace();
@@ -28,7 +31,9 @@ export function ProfileSidebar({ company, person }: { company: Company; person: 
           <ChevronUp size={15} />
         </summary>
         <div className={ui('detail-rail-body')}>
-          {!person && <p className={ui('detail-description')}>{company.description}</p>}
+          {!person && company.description && (
+            <p className={ui('detail-description')}>{company.description}</p>
+          )}
           <dl className={ui('detail-facts')}>
             {person && (
               <>
@@ -79,7 +84,7 @@ export function ProfileSidebar({ company, person }: { company: Company; person: 
               <dt>Location</dt>
               <dd>
                 <MapPin size={13} />
-                {company.city}, {company.country}
+                {companyLocation(company)}
               </dd>
             </div>
             <div>
@@ -88,7 +93,7 @@ export function ProfileSidebar({ company, person }: { company: Company; person: 
                 {company.domain ? (
                   <a
                     className={ui('detail-icon-link')}
-                    href={`https://${company.domain}`}
+                    href={websiteUrl(company) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     title={company.domain}
@@ -126,9 +131,11 @@ export function ProfileSidebar({ company, person }: { company: Company; person: 
                 : 'Not present in any list.'}
             </dd>
           </div>
-          <div>
-            <dt>Data source</dt>
-            <dd>Imported facility CSV</dd>
+          <div className="!block">
+            <dt className="mb-2">Data Sources</dt>
+            <dd className="!block !w-full min-w-0">
+              <DataSources company={company} />
+            </dd>
           </div>
         </dl>
       </details>

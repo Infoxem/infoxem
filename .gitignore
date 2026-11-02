@@ -6,3 +6,8 @@ out/
 *.tsbuildinfo
 .env*
 !.env.example
+scrapers/openserp/runtime/
+scrapers/**/__pycache__/
+scrapers/outputs/
+scrapers/.venv/
+supabase/.temp/

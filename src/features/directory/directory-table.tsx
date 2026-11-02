@@ -1,4 +1,5 @@
 'use client';
+import { websiteUrl } from '@/lib/company-data';
 
 import { ui } from '@/lib/ui';
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
@@ -16,7 +17,7 @@ import {
   CircleCheck,
   ChevronsUpDown,
 } from 'lucide-react';
-import { byId } from '@/lib/demo-data';
+import { useCompanies } from '@/providers/company-provider';
 import type { Company, Person } from '@/types/records';
 import { useWorkspace } from '@/providers/workspace-provider';
 import { Logo } from '@/components/records/record-display';
@@ -38,6 +39,7 @@ export function DirectoryTable({
   hasSearch: boolean;
   reset: () => void;
 }) {
+  const { byId } = useCompanies();
   const { showContact, openRequest, saved, toggleSave } = useWorkspace();
   const [detail, setDetail] = useState<RecordTags | null>(null);
   const closeDetail = useCallback(() => setDetail(null), []);
@@ -219,7 +221,7 @@ export function DirectoryTable({
                               <a
                                 className={ui('record-icon-link')}
                                 aria-label={`Visit ${company.name} website`}
-                                href={`https://${company.domain}`}
+                                href={websiteUrl(company) ?? undefined}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >

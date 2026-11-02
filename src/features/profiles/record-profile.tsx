@@ -1,6 +1,7 @@
 'use client';
 
 import { ui } from '@/lib/ui';
+import { companyLocation, importedCounty, importedLocation } from '@/lib/company-location';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
@@ -11,14 +12,16 @@ import {
   Globe,
   MapPin,
   Check,
-  ShieldCheck,
   Mail,
   Sparkles,
   Building2,
   Users,
   FileText,
 } from 'lucide-react';
-import { people, superintendents } from '@/lib/demo-data';
+import { useCompanies } from '@/providers/company-provider';
+import { superintendentsFor, findingValues, parseCompany, websiteUrl } from '@/lib/company-data';
+import { useLiveData } from '@/hooks/use-live-data';
+import { FindingList } from './finding-list';
 import type { Company, Person } from '@/types/records';
 import { useWorkspace } from '@/providers/workspace-provider';
 import { Logo } from '@/components/records/record-display';
@@ -27,7 +30,7 @@ import { ProfileSidebar } from './profile-sidebar';
 import { ProfileOverview } from './profile-overview';
 
 export function RecordProfile({
-  company,
+  company: initialCompany,
   person = null,
   initialTab = 'Overview',
 }: {
@@ -35,6 +38,12 @@ export function RecordProfile({
   person?: Person | null;
   initialTab?: string;
 }) {
+  const { data: company, error: refreshError } = useLiveData(
+    `/api/companies/${encodeURIComponent(initialCompany.id)}`,
+    parseCompany,
+    initialCompany,
+  );
+  const { people } = useCompanies();
   const id = person?.id ?? company.id;
   const { saved, storedNotes, saveNotes, toggleSave, openList, openRequest, notify } =
     useWorkspace();
@@ -43,7 +52,7 @@ export function RecordProfile({
   const [selected, setSelected] = useState<string[]>([]);
   const notes = draft ?? storedNotes[id] ?? '';
   const contacts = people.filter((contact) => contact.company === company.id);
-  const companySuperintendents = superintendents.filter((record) => record.company === company.id);
+  const companySuperintendents = superintendentsFor(company);
   const tabs = person
     ? ['Overview', 'Company', 'Notes', 'All fields']
     : ['Overview', 'People', 'Locations', 'Notes', 'All fields'];
@@ -119,7 +128,7 @@ export function RecordProfile({
         <span className={ui('active')}>About</span>
       </div>
       <div className={ui('detail-about')}>
-        <p>{company.description}</p>
+        {company.description && <p>{company.description}</p>}
         <dl className={ui('detail-facts')}>
           <div>
             <dt>Industries</dt>
@@ -144,9 +153,7 @@ export function RecordProfile({
           </div>
           <div>
             <dt>Location</dt>
-            <dd>
-              {company.city}, {company.country}
-            </dd>
+            <dd>{companyLocation(company)}</dd>
           </div>
           <div>
             <dt>Business type</dt>
@@ -156,7 +163,11 @@ export function RecordProfile({
             <dt>Website</dt>
             <dd>
               {company.domain ? (
-                <a href={`https://${company.domain}`} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={websiteUrl(company) ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {company.domain}
                 </a>
               ) : (
@@ -188,7 +199,7 @@ export function RecordProfile({
                 <h1>{person?.name ?? company.name}</h1>
                 {company.domain ? (
                   <a
-                    href={`https://${company.domain}`}
+                    href={websiteUrl(company) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     title={`Website · ${company.domain}`}
@@ -209,9 +220,7 @@ export function RecordProfile({
                   <>Pharmaceuticals · {company.type}</>
                 )}
                 <span className={ui('detail-meta-divider')}>·</span>
-                <span>
-                  {company.city}, {company.country}
-                </span>
+                <span>{companyLocation(company)}</span>
               </p>
             </div>
           </div>
@@ -316,17 +325,15 @@ export function RecordProfile({
                   <MapPin size={25} />
                 </span>
                 <div>
-                  <small>HEADQUARTERS</small>
-                  <h3>
-                    {company.city}, {company.country}
-                  </h3>
+                  <small>IMPORTED LOCATION</small>
+                  <h3>{importedLocation(company)}</h3>
                   <p>{company.name}</p>
                 </div>
               </div>
               <dl className={ui('detail-facts detail-about')}>
                 <div>
-                  <dt>City</dt>
-                  <dd>{company.city}</dd>
+                  <dt>County</dt>
+                  <dd>{importedCounty(company)}</dd>
                 </div>
                 <div>
                   <dt>Country</dt>
@@ -335,6 +342,17 @@ export function RecordProfile({
                   </dd>
                 </div>
               </dl>
+            </section>
+          )}
+          {tab === 'Locations' && (
+            <section className={ui('detail-card')}>
+              <header>
+                <MapPin size={17} />
+                <h2>Collected Address / Location</h2>
+              </header>
+              <div className="p-5">
+                <FindingList company={company} fields={['address']} />
+              </div>
             </section>
           )}
           {tab === 'Notes' && (
@@ -383,12 +401,13 @@ export function RecordProfile({
                   Industry: 'Pharmaceuticals',
                   'Business type': company.type,
                   Employees: company.size,
-                  City: company.city,
+                  County: importedCounty(company),
                   Country: company.country,
                   Website: company.domain || 'Not Available',
-                  Phone: 'Not Available',
-                  Email: 'Not Available',
-                  'Source URL': 'Not Available',
+                  Phone: findingValues(company, 'phone').join('; ') || 'Not Available',
+                  Email: findingValues(company, 'email').join('; ') || 'Not Available',
+                  'Address / Location':
+                    findingValues(company, 'address').join('; ') || 'Not Available',
                   ...company.sourceFields,
                   Products: company.products.join(', ') || 'Not Available',
                 }).map(([label, value]) => (
@@ -400,11 +419,7 @@ export function RecordProfile({
               </dl>
             </section>
           )}
-          <p className={ui('detail-profile-disclaimer')}>
-            <ShieldCheck size={12} />
-            Imported source records. Licence status is not live-verified. No live enrichment is
-            performed.
-          </p>
+          {refreshError && <p role="status">{refreshError}</p>}
         </div>
       </div>
     </div>

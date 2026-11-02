@@ -4,6 +4,7 @@ import { useEffect, type SetStateAction } from 'react';
 import { updateWorkspace, useWorkspaceStore } from '@/hooks/use-workspace-store';
 import type { DirectorySearchState as SearchState } from '@/types/records';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useCompanies } from '@/providers/company-provider';
 import {
   EMPTY_REFINEMENTS,
   searchRecords,
@@ -12,6 +13,7 @@ import {
 } from './filter-records';
 
 export function useDirectory(kind: 'buyers' | 'people') {
+  const catalogue = useCompanies();
   const router = useRouter();
   const params = useSearchParams();
   const scope = `${kind}?${params.toString()}`;
@@ -58,6 +60,7 @@ export function useDirectory(kind: 'buyers' | 'people') {
     current.appliedQuery,
     current.sort,
     current.appliedRefinements,
+    catalogue,
   );
   const pages = Math.max(1, Math.ceil(filtered.length / 8));
   const pageNum = Math.min(current.page, pages);
