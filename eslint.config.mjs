@@ -4,5 +4,14 @@ import nextTypescript from 'eslint-config-next/typescript';
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
-  globalIgnores(['.next/**', 'out/**', 'legacy/**', '.playwright-mcp/**', 'next-env.d.ts']),
+  globalIgnores([
+    '.next/**',
+    'out/**',
+    'legacy/**',
+    '.playwright-mcp/**',
+    'next-env.d.ts',
+    'scrapers/openserp/runtime/**',
+    'scrapers/outputs/**',
+    'scrapers/.venv/**',
+  ]),
 ]);

@@ -5,3 +5,6 @@ legacy
 pnpm-lock.yaml
 next-env.d.ts
 public/fonts
+scrapers/openserp/runtime
+scrapers/outputs
+scrapers/.venv

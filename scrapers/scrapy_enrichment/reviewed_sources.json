@@ -1,0 +1,37 @@
+[
+  {
+    "company_name": "Centella Therapy",
+    "aliases": ["BÖNNE", "Bonne Skin Care"],
+    "domains": ["bonneskincare.com"],
+    "urls": ["https://bonneskincare.com/contact/"],
+    "evidence_urls": [
+      "https://ke.linkedin.com/company/centella-therapy-limited",
+      "https://bonneskincare.com/contact/"
+    ],
+    "reviewed_date": "2026-10-31",
+    "reason": "Company-authored LinkedIn posts identify BÖNNE and publish the same business email as the brand site. The brand phone also agrees with the prior company business listing. Exact imported branch is still unverified."
+  },
+  {
+    "company_name": "Kamwangi Pharmacy",
+    "aliases": [],
+    "domains": [],
+    "urls": ["https://www.cybo.com/KE-biz/kamwangi-pharmacy"],
+    "evidence_urls": ["https://www.cybo.com/KE/magina/pharmacies-and-drug-stores/?p=4"],
+    "reviewed_date": "2026-10-31",
+    "reason": "Research found a named pharmacy listing with Kiambu-area address. Fetch and parse the individual business entry; do not collect neighbouring businesses' contacts.",
+    "reviewed_observations": [
+      {
+        "field": "phone",
+        "value": "0722 872435",
+        "source_url": "https://www.cybo.com/KE/magina/pharmacies-and-drug-stores/?p=4",
+        "collected_on": "2026-10-31"
+      },
+      {
+        "field": "location",
+        "value": "Kamwangi Mangu Road Kiamwangi Gatundu, South, Kenya",
+        "source_url": "https://www.cybo.com/KE/magina/pharmacies-and-drug-stores/?p=4",
+        "collected_on": "2026-10-31"
+      }
+    ]
+  }
+]

@@ -80,3 +80,10 @@ All demo records have their own profile routes. Directories start with empty tab
 The UI contains 12 illustrative companies and 14 illustrative contacts. All record details are fictional and `.example` emails are placeholders. Bookmarks, lists, profile notes, and data requests are saved locally. Data Enrichment starts at `/enrichment`, opens a dedicated research preview at `/enrichment/research/[id]`, and automatically redirects to `/enrichment/records/ENR-0001`. The preview supports cancellation, restart, and browser-local progress recovery after refresh. Repeated searches reuse one sample record; no database writes, AI provider calls, or live research occur. See [workflow research and design](docs/enrichment-workflow.md) for sources, decisions, and future integration boundaries. Authentication and outreach delivery are not connected. Campaigns are explicitly marked coming soon.
 
 The previous standalone prototype is preserved in `legacy/prototype/`, excluded from type checks, linting, formatting, and public serving. The active app imports none of its code.
+
+## Scrapers
+
+Local collection tools, research, saved evidence and CSV/Excel exports are grouped
+under [`scrapers/`](scrapers/README.md). Each collector has its own folder; generated
+results and Python dependencies are kept out of version control. See that guide
+for the current stopped collection, saved progress and future scraper conventions.

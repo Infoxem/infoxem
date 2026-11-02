@@ -1,0 +1,50 @@
+server:
+  host: 127.0.0.1
+  port: 7071
+  insecure: false
+  debug: false
+  raw_requests: false
+app:
+  browser_path: 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+  head: false
+  timeout: 30
+  max_processes: 1
+  idle_ttl: 2m
+  save_log: false
+  log_level: warn
+  block_resources: image,font,media
+  block_trackers: true
+resilience:
+  max_retries: 0
+  allow_endpoint_fallback: false
+cache:
+  ttl_seconds: 86400
+  max_size: 1000
+circuit_breaker:
+  failures: 1
+  recovery_seconds: 3600
+  successes: 1
+captcha:
+  solver_enabled: false
+extract:
+  enabled: false
+proxies:
+  allow_request_proxy_url: false
+cors:
+  enabled: false
+google:
+  rate_requests: 3
+  rate_burst: 1
+  resolve_urls: true
+  resolve_concurrency: 1
+  resolve_timeout: 5s
+yandex:
+  disabled: true
+baidu:
+  disabled: true
+bing:
+  disabled: true
+duckduckgo:
+  disabled: true
+ecosia:
+  disabled: true
