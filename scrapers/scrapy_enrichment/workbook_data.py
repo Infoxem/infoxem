@@ -34,42 +34,26 @@ def main():
     old={key:json.loads(body or '{}') for key,body in previous.execute('SELECT id,result FROM companies')};previous.close()
     current={key:(status,json.loads(body or '{}')) for key,status,body in run.DB.execute('SELECT id,status,result FROM jobs')}
     restarted={key:(date,status) for key,date,status in run.DB.execute('SELECT * FROM restart_progress')}
+    published={row['id']:row for row in run.supabase_sync.build_payloads()['finding_companies']}
     contacts=[];locations=[];quarantine=[];searches=[];failures=[];companies=[];source_rows=[]
     for index,record in enumerate(originals,1):
         key=run.collect.key_for(record);status,job=current[key]
-        combined=old.get(key,{}).get('observations',[])+job.get('observations',[])
-        unique={};values={f:set() for f in ['phone','email','website','address','location']};last=[]
-        for item in combined:
-            field=item.get('field');value=str(item.get('value','')).strip();source=item.get('source_url','');date=item.get('collected_at_utc','')
-            if not value or field not in values:continue
+        row=published.get(key,{'phone_mobile':[],'email':[],'website':[],'address':[],'evidence':[]})
+        values={'phone':set(row['phone_mobile']),'email':set(row['email']),'website':set(row['website']),'address':set(row['address'])}
+        last=[]
+        for item in old.get(key,{}).get('observations',[])+job.get('observations',[]):
             if item.get('excluded_from_discovered_fields'):
-                quarantine.append([index,record['Facility Name'],field,value,item.get('audit_reason','Excluded from contact summary'),source,date,key]);continue
-            for part in phone_parts(value) if field=='phone' else [value]:
-                canonical=phone_key(part) if field=='phone' else part.casefold().rstrip('/')
-                token=(field,canonical,source)
-                if token in unique:
-                    existing=unique[token];existing['variants'].add(value)
-                    if date>existing['date']:existing['date']=date
-                    continue
-                unique[token]={'field':field,'value':part,'normalized':canonical,'source':source,'date':date,'variants':{value},'item':item}
-        for entry in unique.values():
-            field=entry['field'];value=entry['value'];item=entry['item'];date=entry['date'];source=entry['source']
+                quarantine.append([index,record['Facility Name'],item.get('field',''),item.get('value',''),item.get('source_url',''),item.get('collected_at_utc',''),key])
+        for item in row['evidence']:
+            field=item['field'];value=item['value'];date=item['collected_at'];source=item['source_url']
             if date:last.append(date)
-            if field in ['address','location']:
-                label=location_label(record,value)
-                locations.append([index,record['Facility Name'],'Published address' if field=='address' else 'Published location',value,label,record.get('Street',''),record.get('County',''),source,date,item.get('collection_method','Earlier collection'),key])
-                values[field].add(value)
+            if field=='address':
+                locations.append([index,record['Facility Name'],value,record.get('Street',''),record.get('County',''),source,item.get('publisher_url',''),date,item['collector'],key])
             else:
-                channel='WhatsApp link' if field=='website' and (urlparse(value).hostname or '') in {'wa.me','api.whatsapp.com'} else field.title()
-                if channel!='WhatsApp link':values[field].add(entry['normalized'] if field=='phone' else value)
-                office=item.get('scope','Company contact; branch unverified')
-                if field=='phone' and entry['normalized'].startswith('+') and not entry['normalized'].startswith('+254'):office='Non-Kenyan prefix; office not confirmed'
-                contacts.append([index,record['Facility Name'],channel,value,entry['normalized'] if field=='phone' else '',office,'Published candidate — review',source,date,item.get('collection_method','Earlier collection'),' | '.join(sorted(entry['variants'])),key])
+                contacts.append([index,record['Facility Name'],field.title(),value,item['normalized_value'] if field=='phone' else '',source,item.get('publisher_url',''),date,item['collector'],key])
         imported=', '.join(filter(None,[record.get('Street'),record.get('County'),'Kenya']))
         restart_status=('Completed' if restarted[key][1]=='discovery_completed' else 'Partial search' if restarted[key][1]=='discovery_partial' else 'Search failed') if key in restarted else 'Not started in restart'
-        note='All published numbers retained; exact branch requires review' if values['phone'] else 'No phone established; read search status'
-        if values['address'] or values['location']:note+='; additional locations kept separately'
-        companies.append([index,record['Facility Name'],record['Business Type'],restart_status,'\n'.join(sorted(values['phone'])) or 'Not Available','\n'.join(sorted(values['email'])) or 'Not Available','\n'.join(sorted(values['website'])) or 'Not Available',imported,'\n'.join(sorted(values['address'])) or 'Not Available','\n'.join(sorted(values['location'])) or 'Not Available',note,sum(len(values[f]) for f in ['phone','email','website']),max(last) if last else '',key])
+        companies.append([index,record['Facility Name'],record['Business Type'],restart_status,'\n'.join(sorted(values['phone'])) or 'Not Available','\n'.join(sorted(values['email'])) or 'Not Available','\n'.join(sorted(values['website'])) or 'Not Available',imported,'\n'.join(sorted(values['address'])) or 'Not Available',sum(len(values[f]) for f in ['phone','email','website']),max(last) if last else '',key])
         source_rows.append([index,record['Facility ID'],record['Facility Name'],record['Business Type'],record.get('Street',''),record.get('County',''),record.get('Licence Status',''),record.get('Source file',''),key])
     for key,stage,status,url,date,payload,error in run.DB.execute('SELECT company_id,stage,status,source_url,checked_at,payload,error FROM attempts'):
         record=current.get(key)

@@ -1,0 +1,120 @@
+{
+  "county_source": "https://kdsp.devolution.go.ke/counties",
+  "counties": [
+    "Baringo",
+    "Bomet",
+    "Bungoma",
+    "Busia",
+    "Elgeyo Marakwet",
+    "Embu",
+    "Garissa",
+    "Homa Bay",
+    "Isiolo",
+    "Kajiado",
+    "Kakamega",
+    "Kericho",
+    "Kiambu",
+    "Kilifi",
+    "Kirinyaga",
+    "Kisii",
+    "Kisumu",
+    "Kitui",
+    "Kwale",
+    "Laikipia",
+    "Lamu",
+    "Machakos",
+    "Makueni",
+    "Mandera",
+    "Marsabit",
+    "Meru",
+    "Migori",
+    "Mombasa",
+    "Murang'a",
+    "Nairobi",
+    "Nakuru",
+    "Nandi",
+    "Narok",
+    "Nyamira",
+    "Nyandarua",
+    "Nyeri",
+    "Samburu",
+    "Siaya",
+    "Taita Taveta",
+    "Tana River",
+    "Tharaka Nithi",
+    "Trans Nzoia",
+    "Turkana",
+    "Uasin Gishu",
+    "Vihiga",
+    "Wajir",
+    "West Pokot"
+  ],
+  "places": [
+    {
+      "name": "Ruiru",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/municipalities/ruiru-municipality/"
+    },
+    {
+      "name": "Gatundu",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Gatundu North",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Gatundu South",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Githunguri",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Juja",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Kabete",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Kiambaa",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Kikuyu",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Limuru",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Ndeiya",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Lari",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    },
+    {
+      "name": "Githurai",
+      "county": "Kiambu",
+      "source": "https://kiambu.go.ke/administrative-units/"
+    }
+  ],
+  "checked_on": "2026-11-02"
+}

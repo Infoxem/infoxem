@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open http://127.0.0.1:3000. All direct dependencies are pinned and the lockfile is committed with the source. No environment variables are required for the UI demo.
+Open http://127.0.0.1:3000. All direct dependencies are pinned and the lockfile is committed with the source. Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in `.env.local`; see [database setup](docs/supabase-data.md).
 
 ```sh
 pnpm lint          # Next.js Core Web Vitals, React Hooks, and TypeScript rules
@@ -77,7 +77,9 @@ All demo records have their own profile routes. Directories start with empty tab
 
 ## Current scope
 
-The UI contains 12 illustrative companies and 14 illustrative contacts. All record details are fictional and `.example` emails are placeholders. Bookmarks, lists, profile notes, and data requests are saved locally. Data Enrichment starts at `/enrichment`, opens a dedicated research preview at `/enrichment/research/[id]`, and automatically redirects to `/enrichment/records/ENR-0001`. The preview supports cancellation, restart, and browser-local progress recovery after refresh. Repeated searches reuse one sample record; no database writes, AI provider calls, or live research occur. See [workflow research and design](docs/enrichment-workflow.md) for sources, decisions, and future integration boundaries. Authentication and outreach delivery are not connected. Campaigns are explicitly marked coming soon.
+Company records now come from Supabase: 8,804 imported facilities, all original fields and 8,790 superintendent entries are preserved. Scraper findings are uploaded after audited batches, with multiple contacts, source evidence and additional published locations. Open pages check for updates every 60 seconds while visible. Missing information displays Not Available. Bookmarks, lists and notes remain browser-local. Superintendents remain separate from People contacts. See [database setup and upload commands](docs/supabase-data.md).
+
+The separate Data Enrichment research workflow remains a fictional preview, with no live AI provider. Request Data, authentication and outreach delivery are not connected. Campaigns remain coming soon.
 
 The previous standalone prototype is preserved in `legacy/prototype/`, excluded from type checks, linting, formatting, and public serving. The active app imports none of its code.
 

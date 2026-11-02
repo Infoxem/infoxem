@@ -21,6 +21,8 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'scrapers/openserp'))
 import collect
 from batch_processor import identity_tokens
+sys.path.insert(0,str(ROOT/'scrapers'))
+import supabase_sync
 
 OUT=ROOT/'scrapers/outputs/scrapy'
 DB=None
@@ -47,6 +49,7 @@ def event(key,stage,status,url,payload,error=''):
 
 
 def name_match(record,title):
+    if not collect.branch_supported(record,title):return False
     tokens=identity_tokens(record)
     target=collect.words(title)
     sector=any(w.startswith('pharm') or w in {'chemist','chemists'} for w in collect.words(record['Facility Name']))
@@ -95,8 +98,8 @@ def discover(key,query,preferred,disabled,client):
     return None,None,None,None
 
 
-def observation(field,value,url,checked,reason):
-    return dict(field=field,value=value,source_url=url,collected_at_utc=checked,match_status='needs_review',scope='Company candidate; country and branch unverified',reason=reason,collection_method='local_pipeline')
+def observation(field,value,url,checked,reason,publisher_url='',source_text=''):
+    return dict(publisher_url=publisher_url,source_text=source_text,field=field,value=value,source_url=url,collected_at_utc=checked,match_status='needs_review',scope='Company candidate; country and branch unverified',reason=reason,collection_method='local_pipeline')
 
 
 def directory_contacts(record,schemas,url):
@@ -176,7 +179,7 @@ class Contacts(scrapy.Spider):
         page=collect.Page(body)
         title=response.css('title::text').get('')
         text=title+' '+' '.join(page.text)[:20000]
-        matched=name_match(job['record'],text) or alias_supported(job['record'],text,response.url)
+        matched=(name_match(job['record'],text) or alias_supported(job['record'],text,response.url)) and collect.branch_supported(job['record'],text)
         geo=geography(text,response.url,job['record'])
         if is_directory(response.url):
             entities=[e for e in schema_entities(page.schemas) if name_match(job['record'],str(e['name']))]
@@ -188,10 +191,10 @@ class Contacts(scrapy.Spider):
             if not entities:job['review_notes'].append('Directory returned no safely scoped business entity: '+response.url)
             return
         event(key,'website','completed',response.url,{'name_supported':matched,'bytes':len(response.body)})
-        if matched and geo=='kenya_supported':
-            job['observations'].append(observation('website',response.url,response.url,checked,'Published website mentions company name; identity and branch need review'))
+        if matched and geo=='kenya_supported' and (not collect.branch_label(job['record']) or name_match(job['record'],title)):
+            job['observations'].append(observation('website',response.url,response.url,checked,'Published website mentions company name; identity and branch need review',source_text=title if collect.branch_label(job['record']) else text))
             for field,value in contacts_from(page):
-                job['observations'].append(observation(field,value,response.url,checked,'Visible website contact; other-country and other-office contacts remain unapproved'))
+                job['observations'].append(observation(field,value,response.url,checked,'Visible website contact; other-country and other-office contacts remain unapproved',source_text=title if collect.branch_label(job['record']) else text))
         else:
             job['review_notes'].append('Company/country evidence insufficient ('+geo+'): '+response.url)
         for href in page.links:
@@ -202,23 +205,21 @@ class Contacts(scrapy.Spider):
 
 
 def export_tables(pilot_ids):
-    prior_path=ROOT/'scrapers/outputs/openserp/infoxem_companies.csv'
-    prior={r['infoxem_id']:r for r in csv.DictReader(prior_path.open(encoding='utf-8-sig',newline=''))} if prior_path.exists() else {}
+    published={r['id']:r for r in supabase_sync.build_payloads()['finding_companies']}
     tables={'companies':[],'pilot':[],'candidates':[],'observations':[],'failures':[]}
     for key,raw,status,body in DB.execute('SELECT * FROM jobs ORDER BY rowid'):
         original=json.loads(raw);result=json.loads(body);obs=result.get('observations',[])
-        row={**prior.get(key,{}),**original,'infoxem_id':key,'scrapy_search_status':status,'scrapy_query_count':len(result.get('queries',[])),'scrapy_queries':'; '.join(result.get('queries',[])),'scrapy_collection_status':result.get('collection_status','not_attempted'),'profile_updated':'No'}
-        for field in ['website','email','phone','location','address']:
-            found=[o for o in obs if o['field']==field and not o.get('excluded_from_discovered_fields')]
-            row['discovered_'+field]='; '.join(sorted({o['value'] for o in found})) or 'Not Available'
-            row['discovered_'+field+'_sources']='; '.join(sorted({o['source_url'] for o in found}))
-            row['discovered_'+field+'_dates']='; '.join(sorted({o['collected_at_utc'] for o in found}))
-        row['scrapy_review_notes']='; '.join(result.get('review_notes',[]))
-        row['research_assisted_fields']='; '.join(sorted({o['field'] for o in obs if o.get('collection_method')=='web_research'}))
+        row={**original,'infoxem_id':key,'scrapy_search_status':status,'scrapy_query_count':len(result.get('queries',[])),'scrapy_queries':'; '.join(result.get('queries',[])),'scrapy_collection_status':result.get('collection_status','not_attempted'),'profile_updated':'No'}
+        published_row=published.get(key,{'website':[],'email':[],'phone_mobile':[],'address':[],'evidence':[]})
+        for field,column in [('website','website'),('email','email'),('phone','phone_mobile'),('address','address')]:
+            found=[e for e in published_row['evidence'] if e['field']==field]
+            row['discovered_'+field]='; '.join(published_row[column]) or 'Not Available'
+            row['discovered_'+field+'_sources']='; '.join(sorted({url for e in found for url in [e['source_url'],e.get('publisher_url','')] if url}))
+            row['discovered_'+field+'_dates']='; '.join(sorted({e['collected_at'] for e in found if e['collected_at']}))
         tables['companies'].append(row)
         if key in pilot_ids:tables['pilot'].append(row)
         tables['candidates'].extend({'infoxem_id':key,**r} for r in result.get('candidates',[]))
-        tables['observations'].extend({'infoxem_id':key,**o} for o in obs)
+        tables['observations'].extend({'infoxem_id':key,**e} for e in published_row['evidence'])
     for key,stage,status,url,date,payload,error in DB.execute('SELECT company_id,stage,status,source_url,checked_at,payload,error FROM attempts WHERE error!=""'):
         tables['failures'].append(dict(infoxem_id=key,stage=stage,status=status,source_url=url,collected_at_utc=date,error=error,raw_payload=payload))
     (OUT/'tables.json').write_text(json.dumps(tables,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -272,13 +273,13 @@ def main():
                     job['successful_queries']+=1
                     for item in results:
                         url=item.get('href','');title=item.get('title','');snippet=item.get('body','')
-                        matched=name_match(record,title+' '+snippet) or alias_supported(record,title+' '+snippet,url)
+                        matched=(name_match(record,title+' '+snippet) or alias_supported(record,title+' '+snippet,url)) and collect.branch_supported(record,title+' '+snippet)
                         geo=geography(title+' '+snippet,url,record)
                         job['candidates'].append(dict(query=query,backend=backend,source_url=source,collected_at_utc=checked,url=url,title=title,snippet=snippet,name_supported=matched,geography=geo))
                         if matched and geo=='kenya_supported':
                             if name_match(record,title) and clean_search_result({'title':title,'snippet':snippet}):
                                 for field,value in contacts_from(collect.Page(snippet)):
-                                    job['observations'].append(observation(field,value,source,checked,'Name-matched search snippet; publisher URL '+url))
+                                    job['observations'].append(observation(field,value,source,checked,'Name-matched search snippet; publisher URL '+url,publisher_url=url,source_text=title+' '+snippet))
                             host=urlparse(url).hostname or ''
                             if host and (is_directory(url) or alias_supported(record,title+' '+snippet,url) or (not any(host==d or host.endswith('.'+d) for d in collect.EXCLUDED) and any(len(w)>=4 and w in host for w in identity_tokens(record)))):
                                 job['crawl_urls'].append(url)

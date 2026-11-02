@@ -147,6 +147,7 @@ class Page(HTMLParser):
             self.schema = []
         if tag == 'address':
             self.in_address = True
+            self.address_parts = []
         if tag == 'a' and attrs.get('href'):
             self.links.append(attrs['href'])
 
@@ -161,6 +162,8 @@ class Page(HTMLParser):
             self.skip = max(0, self.skip - 1)
         if tag == 'address':
             self.in_address = False
+            address = ' '.join(self.address_parts).strip()
+            if address: self.addresses.append(address)
 
     def handle_data(self, value):
         if self.in_schema:
@@ -168,26 +171,84 @@ class Page(HTMLParser):
         if not self.skip:
             self.text.append(value)
             if self.in_address:
-                self.addresses.append(value)
+                self.address_parts.append(value)
+
+
+PLACE_REFERENCE = json.loads(Path(__file__).with_name('kenya_places.json').read_text(encoding='utf-8'))
+
+
+def place_key(text):
+    # Apostrophe variants do not change a county name: Murang'a / Muranga.
+    return ' '.join(words(re.sub(r"['’‘]", '', str(text))))
+
+
+COUNTIES = {place_key(name) for name in PLACE_REFERENCE['counties']}
+PLACE_COUNTIES = {place_key(item['name']): place_key(item['county']) for item in PLACE_REFERENCE['places']}
+
+
+def county_key(value):
+    key = place_key(value)
+    key = re.sub(r'\s+county$', '', key)
+    if key == 'nairobi city': key = 'nairobi'
+    return key if key in COUNTIES else ''
+
+
+def expected_county(record):
+    explicit = county_key(record.get('County', ''))
+    if explicit: return explicit
+    match = re.search(r'\(([^)]+)\)\s*$', record.get('Facility Name', ''))
+    return county_key(match.group(1)) if match else ''
+
+
+def county_match(record, text):
+    expected = expected_county(record)
+    if not expected: return 'unknown'
+    source = ' ' + place_key(text) + ' '
+    # A place inside the business name is not independent location evidence.
+    company = re.sub(r'\([^)]*\)', '', record.get('Facility Name', ''))
+    company = re.split(r'\s+[-–]\s+', company, maxsplit=1)[0]
+    company = re.sub(r'\b(?:limited|ltd)\b', '', place_key(company)).strip()
+    comparable = re.sub(r'\b(?:limited|ltd)\b', '', source)
+    comparable = ' ' + ' '.join(comparable.split()) + ' '
+    if company: source = comparable.replace(' ' + company + ' ', ' ')
+    # Known places establish a parent county; unfamiliar names stay unknown.
+    observed = {county for name,county in {**{c:c for c in COUNTIES},**PLACE_COUNTIES}.items()
+                if re.search(r'(?<!\w)' + re.escape(name) + r'(?!\w)(?!\s+(?:road|rd|street|st|avenue|ave)\b)',source)}
+    if len(observed) != 1: return 'unknown'
+    return 'supported' if expected in observed else 'conflicting'
+
+
+def branch_label(record):
+    name = record.get('Facility Name', '')
+    match = re.search(r'(?:LIMITED|LTD|PHARMACY|CHEMISTS?)\s*[-–]\s*(.+)$', name, re.I)
+    # Parenthetical names are geographic hints, not mandatory branch identifiers.
+    if not match or county_key(match.group(1)): return ''
+    return place_key(match.group(1)) if len(match.group(1).strip()) > 2 else ''
+
+
+def branch_supported(record, text):
+    if county_match(record, text) == 'conflicting': return False
+    branch = branch_label(record)
+    return not branch or (' ' + branch + ' ') in (' ' + place_key(text) + ' ')
 
 
 def schema_contacts(item):
     output = []
     if isinstance(item, list):
-        for child in item:
-            output.extend(schema_contacts(child))
+        for child in item: output.extend(schema_contacts(child))
     elif isinstance(item, dict):
         for field in ('email', 'telephone', 'address'):
-            value = item.get(field)
-            if isinstance(value, str) and value.strip():
-                output.append(({'telephone': 'phone', 'address': 'location'}.get(field, field), value.strip()))
-            elif field == 'address' and isinstance(value, dict):
-                parts = [value.get(k) for k in ('streetAddress', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry')]
-                address = ', '.join(str(v) for v in parts if isinstance(v, (str, int)))
-                if address:
-                    output.append(('location', address))
+            values = item.get(field)
+            for value in values if isinstance(values, list) else [values]:
+                if field == 'address' and isinstance(value, dict):
+                    parts = [value.get(k) for k in ('streetAddress', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry')]
+                    address = ', '.join(str(v) for v in parts if isinstance(v, (str, int)))
+                    if address: output.append(('location', address))
+                elif isinstance(value, str) and value.strip():
+                    parts = re.split(r'[,;/]|\s+(?:or|and)\s+', value, flags=re.I) if field == 'telephone' else re.split(r'[,;]\s*', value) if field == 'email' else [value]
+                    output.extend(({'telephone': 'phone', 'address': 'location'}.get(field, field), v.strip()) for v in parts if v.strip())
         for key, value in item.items():
-            if key != 'address' and isinstance(value, (dict, list)):
+            if key not in {'email','telephone','address'} and isinstance(value, (dict,list)):
                 output.extend(schema_contacts(value))
     return output
 
@@ -202,8 +263,8 @@ def extract_contacts(page):
             contacts.add(('email', link[7:].split('?')[0]))
         elif link.lower().startswith('tel:'):
             contacts.add(('phone', link[4:]))
-    if page.addresses:
-        contacts.add(('location', re.sub(r'\s+', ' ', ' '.join(page.addresses)).strip()))
+    for address in page.addresses:
+        contacts.add(('location', re.sub(r'\s+', ' ', address).strip()))
     return sorted((field, value) for field, value in contacts if value and (field != 'phone' or 7 <= len(re.sub(r'\D', '', value)) <= 15) and (field != 'email' or re.fullmatch(r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}', value, re.I)))
 
 

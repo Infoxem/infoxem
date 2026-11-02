@@ -1,8 +1,9 @@
+'use client';
 import { ui } from '@/lib/ui';
 import Link from 'next/link';
 import { type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { byId } from '@/lib/demo-data';
+import { useCompanies } from '@/providers/company-provider';
 import type { Company, Person } from '@/types/records';
 
 export function Logo({ company, large = false }: { company: Company; large?: boolean }) {
@@ -101,6 +102,7 @@ export function CompanyLink({ company: c }: { company: Company }) {
   );
 }
 export function PersonLink({ person: p }: { person: Person }) {
+  const { byId } = useCompanies();
   const c = byId(p.company);
   return (
     <Link className={ui('identity')} href={`/people/${p.id}`}>

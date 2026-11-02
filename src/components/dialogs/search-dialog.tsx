@@ -4,11 +4,12 @@ import { ui } from '@/lib/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowUpRight, Search } from 'lucide-react';
-import { companies, people } from '@/lib/demo-data';
+import { useCompanies } from '@/providers/company-provider';
 import { useWorkspace } from '@/providers/workspace-provider';
 import { companyLinkContent } from '@/components/records/record-display';
 
 export function SearchDialog() {
+  const { companies, people } = useCompanies();
   const { setModal } = useWorkspace();
   const [globalQuery, setGlobalQuery] = useState('');
   return (

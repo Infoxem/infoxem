@@ -41,7 +41,10 @@ def is_directory(url):
 def geography(text,url,record):
     low=normalized(text);host=(urlparse(url).hostname or '').lower();path=urlparse(url).path.lower()
     kenya=bool(re.search(r'\b(kenya|nairobi|kiambu|kitui|ruiru|mombasa|nakuru|kisumu)\b',low)) or host.endswith('.co.ke') or path.startswith(('/ke/','/ke-biz/')) or '+254' in text
-    if kenya:return 'kenya_supported'
+    if kenya:
+        import collect
+        if collect.county_match(record,text)=='conflicting':return 'foreign_or_conflicting'
+        return 'kenya_supported'
     if host.endswith(('.in','.ca','.com.au','.de','.vn')) or re.search(r'\b(india|pakistan|new york|vancouver|indonesia|kuwait|rwanda)\b',low):return 'foreign_or_conflicting'
     return 'country_unverified'
 

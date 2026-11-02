@@ -19,7 +19,7 @@ scrapers/
 ## Current status and results
 
 Collection is stopped at the user's request. The saved restart has processed
-115 of 8,804 records. The `STOP_RESTART` marker is intentionally retained.
+130 of 8,804 records. The `STOP_RESTART` marker is intentionally retained.
 Organizing the folders does not resume searches or enable monitoring.
 
 The latest Excel file is identified by
@@ -57,3 +57,7 @@ its collector. Neither of the example future collectors is implemented yet.
 Keep existing company data intact, preserve source links and collection dates,
 retain every supported contact number, label additional locations separately,
 and track unsuccessful searches separately from missing contact fields.
+
+## Automatic database uploads
+
+The restart worker now requires the private Supabase connection in `scrapers/.env.local`. It uploads audited findings after each batch, before Excel export. Upload failures stay pending locally. Use `scrapers/.venv/Scripts/python.exe scrapers/supabase_sync.py sync` to upload saved results without running searches. See [the database guide](../docs/supabase-data.md) for imports, checks and recovery.

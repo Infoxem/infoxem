@@ -16,6 +16,22 @@ ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'scrapers/outputs/scrapy'
 BOOK=ROOT/'scrapers/outputs/01a19071-infoxem-restart'
 STATE={}
+sys.path.insert(0,str(ROOT/'scrapers'))
+import supabase_sync
+
+
+def sync_saved_results():
+    state=supabase_sync.SyncState()
+    try:
+        state.stage(supabase_sync.build_payloads())
+        update(sync_status='uploading')
+        state.flush(supabase_sync.Client(progress=lambda **values: update(**values)))
+        update(sync_status='uploaded',**state.status())
+    except (ValueError,RuntimeError) as error:
+        update(sync_status='pending',sync_error=str(error),**state.status())
+        print('Upload pending: '+str(error),flush=True)
+    finally:
+        state.db.close()
 
 
 def update(status=None,**values):
@@ -72,6 +88,7 @@ def export_book():
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--minutes',type=float,default=0,help='Collection window; zero is unlimited');parser.add_argument('--batches',type=int,default=1,help='Maximum five-record batches; default is one')
     args=parser.parse_args()
+    supabase_sync.Client().validate()
     if args.batches<1:parser.error('--batches must be at least 1')
     if args.minutes<0:parser.error('--minutes cannot be negative')
     stop_at=time.time()+args.minutes*60 if args.minutes else 0
@@ -101,6 +118,7 @@ def main():
             call(sys.executable,'scrapers/scrapy_enrichment/run.py','--restart-batch','--limit','5',*deadline_args)
             call(sys.executable,'scrapers/scrapy_enrichment/audit_sample.py')
             call(sys.executable,'scrapers/scrapy_enrichment/parse_saved_directories.py')
+            sync_saved_results()
             call(sys.executable,'scrapers/scrapy_enrichment/run.py','--export-only')
             call('node','scrapers/scrapy_enrichment/export.mjs')
             call(sys.executable,'scrapers/scrapy_enrichment/workbook_data.py')

@@ -20,7 +20,7 @@ test('people exports resolve employer names and markets', () => {
     seniority: 'Not Available',
     email: false,
   };
-  const csv = directoryCsv([fixture], true);
+  const csv = directoryCsv([fixture], true, companies);
   assert.ok(csv.includes('"Test Contact","Test role","CUREWAVE PHARMACY","Kenya"'));
   assert.equal(csv.split('\r\n').length, 2);
 });

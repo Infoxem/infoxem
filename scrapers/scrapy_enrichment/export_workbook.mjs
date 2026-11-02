@@ -22,15 +22,13 @@ const specs = [
       'All emails',
       'All website URLs',
       'Imported location',
-      'Published addresses',
-      'Additional published locations',
-      'Review notes',
+      'Address / Location',
       'Contact count',
       'Last collected (UTC)',
       'Record link',
     ],
-    [7, 45, 16, 24, 29, 36, 42, 42, 48, 48, 46, 13, 23, 20],
-    [12],
+    [7, 45, 16, 24, 29, 36, 42, 42, 48, 13, 23, 20],
+    [10],
   ],
   [
     'Contacts',
@@ -41,16 +39,14 @@ const specs = [
       'Contact type',
       'Published value',
       'Phone key',
-      'Office or branch scope',
-      'Review status',
       'Source URL',
+      'Publisher URL',
       'Collected (UTC)',
       'Collection method',
-      'Published formats',
       'Record link',
     ],
-    [7, 43, 17, 42, 23, 48, 30, 70, 23, 24, 35, 20],
-    [8],
+    [7, 43, 17, 42, 23, 70, 70, 23, 24, 20],
+    [7],
   ],
   [
     'Locations',
@@ -58,18 +54,17 @@ const specs = [
     [
       'No.',
       'Company',
-      'Location type',
-      'Published address or location',
-      'Location label',
+      'Address / Location',
       'Imported street',
       'Imported county',
       'Source URL',
+      'Publisher URL',
       'Collected (UTC)',
       'Collection method',
       'Record link',
     ],
-    [7, 43, 23, 62, 52, 36, 23, 70, 23, 25, 20],
-    [8],
+    [7, 43, 62, 36, 23, 70, 70, 23, 25, 20],
+    [7],
   ],
   [
     'Searches',
@@ -108,18 +103,9 @@ const specs = [
   [
     'Excluded evidence',
     data.quarantine,
-    [
-      'No.',
-      'Company',
-      'Field',
-      'Excluded value',
-      'Reason excluded',
-      'Source URL',
-      'Collected (UTC)',
-      'Record link',
-    ],
-    [7, 43, 17, 32, 80, 70, 23, 20],
-    [6],
+    ['No.', 'Company', 'Field', 'Excluded value', 'Source URL', 'Collected (UTC)', 'Record link'],
+    [7, 43, 17, 32, 70, 23, 20],
+    [5],
   ],
   [
     'Original records',
@@ -156,14 +142,6 @@ for (const [name, rows, headers, widths, dateCols] of specs) {
   body.format.rowHeight = 26;
   sheet.getRange('A2').values = [[name === 'Companies' ? 'Infoxem company enrichment' : name]];
   sheet.getRange('A2').format.font = { name: 'Arial', size: 15, bold: true, color: '#172333' };
-  sheet.getRange('A3').values = [
-    [
-      name === 'Companies'
-        ? 'Contacts are candidates. Different published locations remain separate.'
-        : 'Source links and collection dates are retained for review.',
-    ],
-  ];
-  sheet.getRange('A3').format.font = { name: 'Arial', size: 10, color: '#516174' };
   for (let col = 0; col < headers.length; col++)
     sheet.getRangeByIndexes(0, col, rows.length + 5, 1).format.columnWidth = widths[col];
   for (const col of dateCols)
@@ -180,7 +158,7 @@ for (const [name, rows, headers, widths, dateCols] of specs) {
     if (name === 'Companies') {
       for (let i = 0; i < rows.length; i++)
         if (
-          rows[i].slice(4, 11).some((v) => String(v).includes('\n')) ||
+          rows[i].slice(4, 9).some((v) => String(v).includes('\n')) ||
           rows[i][3] !== 'Not started in restart'
         )
           sheet.getRangeByIndexes(i + 5, 0, 1, headers.length).format.rowHeight = 78;
@@ -205,10 +183,6 @@ for (const [name, rows, headers, widths, dateCols] of specs) {
       .getRangeByIndexes(5, 3, rows.length, 1)
       .conditionalFormats.add('containsText', { text: 'Partial', format: { fill: '#FFF0CD' } });
   }
-  if (name === 'Locations' && rows.length)
-    sheet
-      .getRangeByIndexes(5, 4, rows.length, 1)
-      .conditionalFormats.add('containsText', { text: 'Additional', format: { fill: '#FFF0CD' } });
 }
 overview.showGridLines = false;
 overview.tabColor = '#223A55';
@@ -235,7 +209,7 @@ overview.getRange('A10:B17').values = [
     'Companies',
     'All collected phone numbers and emails together with imported and additional locations.',
   ],
-  ['Contacts', 'Every contact value with its source, office/branch note and collection date.'],
+  ['Contacts', 'Contact values, sources and collection dates.'],
   ['Locations', 'Published addresses and locations labelled separately from the imported address.'],
   ['Searches', 'Queries, source engines and successful or failed search responses.'],
   [

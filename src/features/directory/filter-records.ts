@@ -1,4 +1,4 @@
-import { companies, people, getCompanyById } from '@/lib/demo-data';
+import { EMPTY_CATALOGUE, type Catalogue } from '@/lib/company-data';
 import type { Company, Person } from '@/types/records';
 
 export type DirectoryCriteria = {
@@ -73,20 +73,23 @@ export function searchRecords(
   query: string,
   sort = 'match',
   refinements: DirectoryRefinements = EMPTY_REFINEMENTS,
+  catalogue: Catalogue = EMPTY_CATALOGUE,
 ): (Company | Person)[] {
   if (!hasDirectoryCriteria(query, refinements)) return [];
-  return filterRecords(kind, { ...DEFAULT_CRITERIA, ...refinements, query, sort }, []);
+  return filterRecords(kind, { ...DEFAULT_CRITERIA, ...refinements, query, sort }, [], catalogue);
 }
 
 export function filterRecords(
   kind: 'buyers' | 'people',
   criteria: DirectoryCriteria,
   saved: string[],
+  catalogue: Catalogue = EMPTY_CATALOGUE,
 ): (Company | Person)[] {
+  const { companies, people } = catalogue;
   const records = kind === 'people' ? people : companies;
   const terms = getSearchTerms(criteria.query);
   const companyFor = (record: Company | Person) =>
-    'company' in record ? getCompanyById(record.company) : record;
+    'company' in record ? companies.find((company) => company.id === record.company) : record;
   return records
     .filter((record) => {
       const company = companyFor(record);

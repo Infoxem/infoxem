@@ -1,0 +1,12 @@
+# Local collection evidence, credentials and fixtures are not needed by the website.
+scrapers/
+tests/
+supabase/
+legacy/
+context/
+docs/
+src/lib/facilities.json
+src/lib/demo-data.ts
+.env*
+.git/
+.playwright-mcp/

@@ -1,5 +1,7 @@
 # DDGS and Scrapy contact collection
 
+Current database integration: the restart worker uploads saved findings to Supabase after the existing audit and saved-page parsing steps. Configure `scrapers/.env.local` first. Findings appear automatically with their existing uncertainty notes; excluded evidence stays hidden. Excel remains a report. Earlier pilot descriptions below describe the collection work before this integration. See [database setup](../../docs/supabase-data.md).
+
 Browser-free replacement pilot for Infoxem. DDGS discovers pages through explicitly selected DuckDuckGo/Bing backends; Scrapy fetches public website pages. No browser, Google backend, Google API or paid data API is used. Search engines can still fail or block requests.
 
 The first pilot selects two previously researched companies and three remaining companies. Results are stored separately under `scrapers/outputs/scrapy`; existing OpenSERP results and original Infoxem profiles are preserved. The all-company CSV retains the previous fields and appends `discovered_*` proposals, sources, dates and separate discovery/collection statuses. All new contacts require identity, country and branch review. A successful HTTP request is not a verified company match.

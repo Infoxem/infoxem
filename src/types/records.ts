@@ -1,4 +1,6 @@
 export type Company = {
+  findings?: Finding[];
+  collectionStatus?: string;
   sourceFields?: Record<string, string>;
   id: string;
   name: string;
@@ -14,6 +16,21 @@ export type Company = {
   color: string;
   description: string;
   contacts: number;
+};
+
+export type Finding = {
+  id: string;
+  companyId: string;
+  field: 'phone' | 'email' | 'website' | 'address' | 'location';
+  value: string;
+  normalizedValue: string;
+  sourceUrl: string;
+  publisherUrl?: string;
+  collectedAt: string | null;
+  datePrecision: string;
+  scope: string;
+  collector: string;
+  reason: string;
 };
 
 export type Person = {

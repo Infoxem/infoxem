@@ -1,6 +1,7 @@
+import { companies, people } from '../src/lib/demo-data';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { searchRecords } from '../src/features/directory/filter-records';
+import { searchRecords as searchWithData } from '../src/features/directory/filter-records';
 import { EMPTY_WORKSPACE, loadWorkspace, parseWorkspace } from '../src/lib/workspace-storage';
 
 test('corrupt or incorrectly shaped browser data produces a usable workspace', () => {
@@ -113,3 +114,6 @@ test('filter-only submitted searches survive storage separately from unsaved dra
   );
   assert.equal(restored.directories.people?.appliedRefinements.title, 'Director');
 });
+
+const searchRecords = (...args: Parameters<typeof searchWithData>) =>
+  searchWithData(args[0], args[1], args[2], args[3], { companies, people });

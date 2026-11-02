@@ -10,6 +10,29 @@ from batch_processor import validate_capture, identity_tokens, snippet_observati
 
 
 class CollectionTests(unittest.TestCase):
+    def test_county_and_town_levels_are_not_literal_branch_names(self):
+        record={'Facility Name':'ACCORD MEDICARE PHARMACY (Kiambu)','County':'Kiambu'}
+        self.assertEqual(collect.branch_label(record),'')
+        self.assertEqual(collect.county_match(record,'Green Valley Estate, Ruiru'),'supported')
+        self.assertTrue(collect.branch_supported(record,'Green Valley Estate, Ruiru'))
+        self.assertEqual(collect.county_match(record,'Green Valley Estate'),'unknown')
+        self.assertEqual(collect.county_match(record,'Nairobi Road, Ruiru'),'supported')
+        self.assertEqual(collect.county_match(record,'Nairobi Road'),'unknown')
+        self.assertTrue(collect.branch_supported(record,'Green Valley Estate'))
+        self.assertEqual(collect.county_match(record,'Nairobi and Kiambu branches'),'unknown')
+        self.assertEqual(collect.county_match({'County':"Murang’a"},'Kisumu'),'conflicting')
+        self.assertEqual(collect.county_match({'County':"Murang'a"},'Muranga'),'supported')
+        self.assertEqual(collect.county_match({'Facility Name':'Nairobi Pharmacy Limited','County':'Kiambu'},'Nairobi Pharmacy Ltd contacts'),'unknown')
+        self.assertEqual(len(collect.COUNTIES),47)
+
+    def test_structured_arrays_and_separate_html_addresses(self):
+        schema = {'telephone':['0720123456, 0733123456','0744123456'], 'email':['a@example.com','b@example.com'], 'address':[{'streetAddress':'Road One'},{'streetAddress':'Road Two'}]}
+        values = collect.extract_contacts(collect.Page('<script type="application/ld+json">'+json.dumps(schema)+'</script><address>Building <b>One</b></address><address>Building Two</address>'))
+        self.assertEqual(sum(field=='phone' for field,value in values),3)
+        self.assertEqual(sum(field=='email' for field,value in values),2)
+        for value in ['Road One','Road Two','Building One','Building Two']:
+            self.assertIn(('location',value),values)
+
     def test_branch_suffix_does_not_hide_company_contacts(self):
         record={'Facility Name':'CROSWELL PHARMACY LIMITED-KAMAKIS','County':''}
         self.assertEqual(identity_tokens(record),{'croswell'})

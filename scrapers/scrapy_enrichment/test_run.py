@@ -6,6 +6,15 @@ from audit_sample import audit
 
 
 class MatchingTests(unittest.TestCase):
+    def test_town_county_match_and_directory_conflict(self):
+        record={'Facility Name':'ACCORD MEDICARE PHARMACY (Kiambu)','County':'Kiambu'}
+        self.assertTrue(run.name_match(record,'Accord Medicare Pharmacy Ruiru'))
+        self.assertEqual(run.geography('Green Valley Estate, Ruiru','https://example.com',record),'kenya_supported')
+        other={'Facility Name':"AFYA CHEMIST (Murang'a)",'County':"Murang'a"}
+        self.assertFalse(run.name_match(other,'Afya Chemist Kisumu'))
+        html='<h1 class="main-name">Afya Chemist</h1><table class="info-table"><tr><td>Location</td><td>Kisumu, Kenya</td></tr><tr><td>Phone</td><td>0729911327</td></tr></table>'
+        self.assertEqual(run.scoped_contacts(other,html,'https://medpages.info/business',run.name_match,run.contacts_from,run.collect.Page),[])
+
     def test_time_limit_prevents_new_search_and_page_requests(self):
         from unittest.mock import MagicMock
         with patch.object(run,'STOP_AT',10),patch.object(run.time,'time',return_value=11):
@@ -130,11 +139,13 @@ class MatchingTests(unittest.TestCase):
     def test_pharmacy_name_does_not_match_financial_company(self):
         record={'Facility Name':'ABACUS PHARMA (A) LTD (Nairobi)','County':'Nairobi'}
         self.assertFalse(run.name_match(record,'Abacus investment and financial services'))
-        self.assertTrue(run.name_match(record,'Abacus Pharma pharmaceutical contacts Kenya'))
+        self.assertTrue(run.name_match(record,'Abacus Pharma pharmaceutical contacts Nairobi Kenya'))
 
     def test_branch_suffix_is_supporting_evidence(self):
         record={'Facility Name':'CROSWELL PHARMACY LIMITED-KAMAKIS','County':''}
-        self.assertTrue(run.name_match(record,'Croswell Pharmacy Ruiru'))
+        self.assertFalse(run.name_match(record,'Croswell Pharmacy Ruiru'))
+        self.assertFalse(run.name_match(record,'Croswell Pharmacy Nakuru Kenya'))
+        self.assertTrue(run.name_match(record,'Croswell Pharmacy Kamakis Kenya'))
         self.assertFalse(run.name_match(record,'Kam Pharmacy'))
 
     def test_visible_contacts_exclude_script_email(self):
